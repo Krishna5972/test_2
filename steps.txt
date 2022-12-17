@@ -1,0 +1,26 @@
+cd C:\\Users\\krishna\\telegram_notifier
+
+git init
+
+git add .
+
+
+git commit -m "1st commit"
+
+heroku create avax-telegram-notifier
+
+heroku buildpacks:add --index 1 heroku/python
+
+heroku buildpacks:add --index 2 https://github.com/numrut/heroku-buildpack-python-talib
+
+git push heroku master
+
+heroku ps:scale worker=1
+
+heroku ps:scale worker=0 #sleep
+
+heroku ps -a avax-telegram-notifier  #to-check-free-dyno hours
+
+
+
+
