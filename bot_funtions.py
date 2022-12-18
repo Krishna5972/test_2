@@ -393,7 +393,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
 
             
 
-                notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1]["ma_condition"]}')
+                notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1][{ma_condition}]}')
                 
                 
                 if signal == 'Buy' and ma_pos == 1:
