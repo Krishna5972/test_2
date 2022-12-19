@@ -38,6 +38,6 @@ df_fin['day']=df_fin[['date','month']].apply(lambda x: datetime(datetime.now().y
 
 df_fin.sort_values(by=['day'],inplace=True)
 
-df_fin.to_csv('last_3_months.csv',index=False,mode='w+')
+df_fin.to_csv('last_3_months_2.csv',index=False,mode='w+')
 
-send_mail('last_3_months.csv')
+send_mail('last_3_months_2.csv')

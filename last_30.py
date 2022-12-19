@@ -36,6 +36,6 @@ df['income']=df['income'].astype('float')
 df_fin=df.groupby(['date','month']).agg({'income':'sum'}).reset_index()
 df_fin['day']=df_fin[['date','month']].apply(lambda x: datetime(datetime.now().year,x['month'], x['date'], 0, 0, 0, 0) ,axis=1)
 
-df_fin.to_csv('last_30.csv',index=False,mode='w+')
+df_fin.to_csv('last_30_2.csv',index=False,mode='w+')
 
-send_mail('last_30.csv')
+send_mail('last_30_2.csv')

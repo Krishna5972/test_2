@@ -185,7 +185,6 @@ def notifier(message,tries=0):
         
 def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
     notifier(f'Starting USDT function,SARAVANA BHAVA')
-    weight_reduce=1
     indicator=1
     while(True):
         try:
@@ -240,28 +239,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             
                 
                 
-                rr=3
+            
                 notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                 
                 if signal == 'Buy' and ma_pos == 1:
                     #buy order
                     client.futures_create_order(symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='LONG')
                     notifier(f'Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                    take_profit=entry+((entry-sl)*rr)
-                    client.futures_create_order(
-                            symbol=f'{coin}USDT',
-                            price=round(take_profit,2),
-                            side='SELL',
-                            positionSide='LONG',
-                            quantity=quantity,
-                            timeInForce='GTC',
-                            type='LIMIT',
-                            # reduceOnly=True,
-                            closePosition=False,
-                            # stopPrice=round(take_profit,2),
-                            workingType='MARK_PRICE',
-                            priceProtect=True  
-                            )
+                    
                     in_trade_usdt.value=1
                     notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                     
@@ -270,21 +255,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     #sell order
                     client.futures_create_order(symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='SHORT')
                     notifier(f'Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                    take_profit=entry-((sl-entry)*rr)
-                    client.futures_create_order(
-                                            symbol=f'{coin}USDT',
-                                            price=round(take_profit,2),
-                                            side='BUY',
-                                            positionSide='SHORT',
-                                            quantity=quantity,
-                                            timeInForce='GTC',
-                                            type='LIMIT',
-                                            # reduceOnly=True,
-                                            closePosition=False,
-                                            # stopPrice=round(take_profit,2),
-                                            workingType='MARK_PRICE',
-                                            priceProtect=True  
-                                            )
+                    
                     in_trade_usdt.value=1
                     notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                 else:
@@ -293,13 +264,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                 time.sleep(sleep_time*60)
             else:
                 print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
-                if in_trade_usdt.value==1 and weight_reduce>=15:
-                    weight_reduce=0
-                    open_orders=client.futures_get_open_orders(symbol=f'{coin}USDT')
-                    if len(open_orders)==0:
-                        lock.acquire()
-                        in_trade_usdt.value=0
-                        lock.release()
+                
                 
                 
                 if indicator>900:
@@ -322,7 +287,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
 
                     notifier(f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value},Bal :{bal_pos},PNL:{profit_pos}')                    
-                weight_reduce+=1
+                
                 indicator+=1
                 time.sleep(2)
         except Exception as err:
@@ -337,7 +302,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
     notifier(f'Starting BUSD function,SARAVANA BHAVA')
     while(True):
         try:
-            risk=0.025
+            risk=0.02
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=300)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
             df['OpenTime'] = pd.to_datetime(df['OpenTime'], unit='ms')+ pd.DateOffset(hours=5, minutes=30)
