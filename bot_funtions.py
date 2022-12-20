@@ -195,10 +195,6 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             super_df=supertrend(coin,df, period, atr1,pivot_period)
             super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
             ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
-            if super_df.iloc[-1]['OpenTime'] != super_df.iloc[-2]['OpenTime']:
-                pass
-            else:
-                time.sleep(300)
             if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
                 lock.acquire()
                 
@@ -216,7 +212,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         
                     print(err)
 
-                # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
+                print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
                 acc_balance = round(float(client.futures_account()['availableBalance']),2)
                 if in_trade_busd.value == 0:
                     stake=(acc_balance*0.88)
@@ -267,11 +263,11 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                 lock.release()
                 time.sleep(sleep_time*60)
             else:
-                # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
+                print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
                 
                 
                 
-                if indicator>6:
+                if indicator>900:
                     indicator=0   #notification every 30 minutes
                     information=client.futures_account()
                     totalUnrealizedProfit=round(float(information['totalUnrealizedProfit']),2)
@@ -313,11 +309,6 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             super_df=supertrend(coin,df, period, atr1,pivot_period)
             super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
             ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
-            if super_df.iloc[-1]['OpenTime'] != super_df.iloc[-2]['OpenTime']:
-                pass
-            else:
-                time.sleep(300)
-
             if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
                 lock.acquire()
                 
@@ -339,7 +330,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                 
                 
                 
-                # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
+                print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
                 acc_balance = round(float(client.futures_account()['availableBalance']),2)
                 
                 
@@ -361,7 +352,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     sl=super_df.iloc[-1]['upper_band']
                     sl_perc=(sl-entry)/entry
                     
-                # print(f'initial stake:{stake}')
+                print(f'initial stake:{stake}')
                 stake=(stake*risk)/sl_perc
                 quantity=round(stake/entry,3)
 
@@ -393,9 +384,8 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
 
                 
             else:       
-                # print(f'Scanning BUSD {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
-                pass
-
+                print(f'Scanning BUSD {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
+                time.sleep(2)
         except Exception as e: 
             notifier(e)
             notifier(f'Restarting BUSD function in 50 seconds')
