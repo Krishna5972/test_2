@@ -10,17 +10,13 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email import encoders
 from email.mime.text import MIMEText
-import websocket
-import pandas as pd
-import json
-from datetime import datetime
 
 def supertrend(coin,df, period, atr_multiplier,pivot_period):
     pivot_period=pivot_period
     trend_atr=atr_multiplier
     trend_period=period
         
-    # df['OpenTime']=pd.to_datetime(df['OpenTime'])
+    df['OpenTime']=pd.to_datetime(df['OpenTime'])
     
     
     df['ma_40']=talib.MA(df['close'], timeperiod=40)
@@ -170,8 +166,8 @@ def close_position_busd(client,coin,signal):
         client.futures_create_order(symbol=f'{coin}BUSD', side='BUY', type='MARKET', quantity=1000,dualSidePosition=True,positionSide='SHORT')
         
         
-telegram_auth_token='5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
-telegram_group_id='notifier2_scanner_bot_link'        
+telegram_auth_token='5779187651:AAHWdZulm_tlTKWtgIBaAyS08TPSeJhzzlw'
+telegram_group_id='notifier_2'       
         
 def notifier(message,tries=0):
     telegram_api_url=f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage?chat_id=@{telegram_group_id}&text={message}'
@@ -464,10 +460,10 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             print(e)
             restart=1
 
-
+            
 def send_mail(filename,subject='SARAVANA BHAVA'):
     from_= 'gannamanenilakshmi1978@gmail.com'
-    to= 'vamsikrishnagannamaneni@gmail.com'
+    to= 'jaswanthgoelite@gmail.com'
     
     message = MIMEMultipart()
     message['From'] = from_
