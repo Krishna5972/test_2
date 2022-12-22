@@ -235,11 +235,10 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             print(err)
 
                         # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
-                        acc_balance = round(float(client.futures_account()['availableBalance']),2)
-                        if in_trade_busd.value == 0:
-                            stake=(acc_balance*0.88)
-                        else:
-                            stake=acc_balance+(acc_balance*0.12)
+                        acc_balance = round(float(client.futures_account()['totalMarginBalance']),2)
+                        
+                        stake=(acc_balance*0.88)
+                
                             
                         
                         notifier(f'Allocated stake:{round(stake,2)}')
@@ -260,29 +259,19 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     
                         
                         
-                        rr=3
+                        
                         
                         if signal == 'Buy' and ma_pos == 1:
                             #buy order
                             client.futures_create_order(symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='LONG')
+                           
+                            notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
 
                             notifier(f'Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            take_profit=entry+((entry-sl)*rr)
-                            client.futures_create_order(
-                                    symbol=f'{coin}USDT',
-                                    price=round(take_profit,2),
-                                    side='SELL',
-                                    positionSide='LONG',
-                                    quantity=quantity,
-                                    timeInForce='GTC',
-                                    type='LIMIT',
-                                    # reduceOnly=True,
-                                    closePosition=False,
-                                    # stopPrice=round(take_profit,2),
-                                    workingType='MARK_PRICE',
-                                    priceProtect=True  
-                                    )
+                            
+                        
                             in_trade_usdt.value=1
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             
@@ -290,24 +279,13 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                 
                             #sell order
                             client.futures_create_order(symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='SHORT')
+                            
+                            notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
 
                             notifier(f'Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            take_profit=entry-((sl-entry)*rr)
-                            client.futures_create_order(
-                                                    symbol=f'{coin}USDT',
-                                                    price=round(take_profit,2),
-                                                    side='BUY',
-                                                    positionSide='SHORT',
-                                                    quantity=quantity,
-                                                    timeInForce='GTC',
-                                                    type='LIMIT',
-                                                    # reduceOnly=True,
-                                                    closePosition=False,
-                                                    # stopPrice=round(take_profit,2),
-                                                    workingType='MARK_PRICE',
-                                                    priceProtect=True  
-                                                    )
+                            
                             in_trade_usdt.value=1
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                         else:
@@ -319,23 +297,13 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
                         notifier(f'{timeframe} candle closed')
 
-
-                        if in_trade_usdt.value==1 and weight_reduce>=1:
-                            weight_reduce=0
-                            open_orders=client.futures_get_open_orders(symbol=f'{coin}USDT')
-                            if len(open_orders)==0:
-                                lock.acquire()
-                                in_trade_usdt.value=0
-                                notifier('USDT Pos closed in profit')
-                                lock.release()
-                        
                         
                         if indicator>1:
                             indicator=0   #notification every 60 minutes
                             information=client.futures_account()
                             totalUnrealizedProfit=round(float(information['totalUnrealizedProfit']),2)
                             bal=round(float(information['totalWalletBalance']),2)
-                            if bal > 173: #Month initial
+                            if bal > 120: #Month initial
                                 bal_pos='Profit'
                             else:
                                 bal_pos='Loss'
@@ -408,13 +376,10 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                                 print(err)
             
                         # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
-                        acc_balance = round(float(client.futures_account()['availableBalance']),2)
+                        acc_balance = round(float(client.futures_account()['totalMarginBalance']),2)
                         
                         
-                        if in_trade_usdt.value==0:
-                            stake=(acc_balance*0.88)
-                        else:
-                            stake=acc_balance+(acc_balance*0.12)
+                        stake=(acc_balance*0.88)
 
                         
                         notifier(f'Allocated stake:{round(stake,2)}')
