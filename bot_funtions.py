@@ -223,14 +223,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         try:
                             close_position(client,coin,'Sell') #close open position if any
                             in_trade_usdt.value=0
-                            notifier('Position Closed')
+                            notifier(f'Position Closed {timeframe}')
                         except Exception as err:
                             try:
                                 close_position(client,coin,'Buy')
-                                notifier('Position Closed')
+                                notifier(f'Position Closed {timeframe}')
                                 in_trade_usdt.value=0
                             except Exception as e:
-                                notifier('No Open Position to Close')
+                                notifier(f'No Open Position to Close {timeframe}')
                                 
                             print(err)
 
@@ -364,15 +364,15 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                         
                         try:
                             close_position_busd(client,coin,'Sell') #close open position if any
-                            notifier('Position Closed')
+                            notifier(f'Position Closed {timeframe}')
                             in_trade_busd.value=0
                         except Exception as err:
                             try:
                                 close_position_busd(client,coin,'Buy')
-                                notifier('Position Closed')
+                                notifier(f'Position Closed {timeframe}')
                                 in_trade_busd.value=0
                             except Exception as e: 
-                                notifier('No Position to close')
+                                notifier(f'No Position to close {timeframe}')
                                 print(err)
             
                         # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
