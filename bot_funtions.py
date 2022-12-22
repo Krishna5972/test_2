@@ -10,6 +10,10 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email import encoders
 from email.mime.text import MIMEText
+import websocket
+import pandas as pd
+import json
+from datetime import datetime
 
 def supertrend(coin,df, period, atr_multiplier,pivot_period):
     pivot_period=pivot_period
@@ -460,7 +464,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             print(e)
             restart=1
 
-            
+
 def send_mail(filename,subject='SARAVANA BHAVA'):
     from_= 'gannamanenilakshmi1978@gmail.com'
     to= 'jaswanthgoelite@gmail.com'
