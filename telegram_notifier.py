@@ -49,8 +49,8 @@ while(True):
     try:
         client=Client(config.api_key,config.secret_key)
 
-        client.futures_change_leverage(symbol=f'{coin}USDT', leverage=8)
-        client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=8)
+        client.futures_change_leverage(symbol=f'{coin}USDT', leverage=18)
+        client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=18)
         notifier(f'SARAVANA BHAVA')
         break
     except Exception as e:
