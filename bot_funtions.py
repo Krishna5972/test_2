@@ -209,11 +209,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             
             
             for symbol in exchange_info['symbols']:
-                if symbol['symbol'] == "ETHUSDT":
-                    
+                if symbol['symbol'] == f"{coin}USDT":                   
                     round_quantity=symbol['quantityPrecision']
-                    notifier(round_quantity)
-                    print(round_quantity)
                     break
             notifier(round_quantity)
             indicator=0
@@ -401,11 +398,13 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             notifier(f'from bsud {coin}')
             print(coin)
             for symbol in exchange_info['symbols']:
-                if symbol['symbol'] == "ETHUSDT":
+                if symbol['symbol'] == f"{coin}BUSD":                   
                     round_quantity=symbol['quantityPrecision']
-                    notifier(round_quantity)
                     break
-            notifier(round_quantity)
+                elif symbol['symbol'] == f"{coin}USDT":
+                    round_quantity=symbol['quantityPrecision']
+                    break
+            notifier(f'Round Quantity :{round_quantity}')
             while True:
                 result = ws.recv()
                 data = json.loads(result)
