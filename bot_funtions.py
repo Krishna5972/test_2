@@ -206,11 +206,10 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             decimal_index = x_str.find('.')
             round_price = len(x_str) - decimal_index - 1
             exchange_info = client.futures_exchange_info()
-            notifier(coin)
-            print(coin)
-            print(exchange_info)
+            
+            
             for symbol in exchange_info['symbols']:
-                if symbol['symbol'] == coin:
+                if symbol['symbol'] == "ETHUSDT":
                     
                     round_quantity=symbol['quantityPrecision']
                     notifier(round_quantity)
@@ -402,7 +401,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             notifier(f'from bsud {coin}')
             print(coin)
             for symbol in exchange_info['symbols']:
-                if symbol['symbol'] == coin:
+                if symbol['symbol'] == "ETHUSDT":
                     round_quantity=symbol['quantityPrecision']
                     notifier(round_quantity)
                     break
