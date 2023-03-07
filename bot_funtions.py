@@ -371,6 +371,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             notifier(f'Restarting USDT function : {coin}')
             print(err)
             restart=1
+            ws.close()
+            time.sleep(10)
 
 
             
@@ -489,6 +491,8 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             notifier(e)
             notifier(f'Restarting BUSD function : {coin}')
             print(e)
+            ws.close()
+            time.sleep(10)
             restart=1
 
 
