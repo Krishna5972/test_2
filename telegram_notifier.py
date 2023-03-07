@@ -38,11 +38,11 @@ timeframes_dict={
 
 
 coin='ETH'
-timeframe_usdt='30m' 
-period_usdt=12
+timeframe_usdt='15m' 
+period_usdt=56
 atr1_usdt=1
-pivot_period_usdt=10
-ma_condition_usdt='ma_40'
+pivot_period_usdt=30
+ma_condition_usdt='ma_200'
 time_usdt=timeframes_dict[timeframe_usdt]
 
 while(True):
@@ -58,11 +58,11 @@ while(True):
         time.sleep(300)
 
 
-timeframe_busd='15m'  
-period_busd=5
+timeframe_busd='30m'  
+period_busd=12
 atr1_busd=1
-pivot_period_busd=8
-ma_condition_busd='ema_200'
+pivot_period_busd=10
+ma_condition_busd='ema_100'
 time_busd=timeframes_dict[timeframe_busd]
 
 

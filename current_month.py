@@ -9,7 +9,6 @@ import time
 
 
 
-coin='ETH'
 client=Client(config.api_key,config.secret_key)
 
 end_date=datetime.now()
@@ -20,10 +19,8 @@ star_date=time.mktime(star_date.timetuple())
 end_date=int(end_date)*1000
 star_date=int(star_date)*1000
 
-data=client.futures_income_history(symbol=f'{coin}USDT',startTime=star_date,endTime=end_date,limit=1000)
-data_BUSD=client.futures_income_history(symbol=f'{coin}BUSD',startTime=star_date,endTime=end_date,limit=1000)
+data=client.futures_income_history(startTime=star_date,endTime=end_date,limit=1000)
 
-data.extend(data_BUSD)
 
 df=pd.DataFrame(data)
 df['time']=df['time'].apply(lambda x:datetime.fromtimestamp(x/1000))
@@ -38,6 +35,6 @@ df_fin['day']=df_fin[['date','month']].apply(lambda x: datetime(datetime.now().y
 
 df_fin.sort_values(by=['day'],inplace=True)
 
-df_fin.to_csv('current_month_2.csv',index=False,mode='w+')
+df_fin.to_csv('current_month.csv',index=False,mode='w+')
 
-send_mail('current_month_2.csv')
+send_mail('current_month.csv')
