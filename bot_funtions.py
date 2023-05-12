@@ -14,6 +14,7 @@ import websocket
 import pandas as pd
 import json
 from datetime import datetime
+from numba import njit
 
 def supertrend(coin,df, period, atr_multiplier,pivot_period):
     pivot_period=pivot_period
@@ -168,10 +169,504 @@ def close_position_busd(client,coin,signal):
         client.futures_create_order(symbol=f'{coin}BUSD', side='SELL', type='MARKET', quantity=1000,dualSidePosition=True,positionSide='LONG')
     else:
         client.futures_create_order(symbol=f'{coin}BUSD', side='BUY', type='MARKET', quantity=1000,dualSidePosition=True,positionSide='SHORT')
+
+
+@njit
+def cal_numba(opens,highs,lows,closes,in_uptrends,profit_perc,sl_perc,upper_bands,lower_bands,colors,rsis,macdhists,slowks,slowds,volumes):
+    entries=np.zeros(len(opens))
+    signals=np.zeros(len(opens))  #characters  1--> buy  2--->sell
+    tps=np.zeros(len(opens))
+    trades=np.zeros(len(opens))  #characters   1--->w  0---->L
+    close_prices=np.zeros(len(opens))
+    time_index=np.zeros(len(opens))
+    candle_count=np.zeros(len(opens))
+    local_max=np.zeros(len(opens))
+    local_min=np.zeros(len(opens))
+    upper=np.zeros(len(opens))
+    lower=np.zeros(len(opens))
+    next_colors=np.zeros(len(opens))
+    local_max_bar=np.zeros(len(opens))
+    local_min_bar=np.zeros(len(opens))
+    
+    
+    next_colors=np.zeros(len(opens))
+    local_max_bar=np.zeros(len(opens))
+    local_min_bar=np.zeros(len(opens))
+    next_close=np.zeros(len(opens))
+    indication = 0
+    buy_search=0
+    sell_search=1
+    change_index=0
+    local_max_bar_2=np.zeros(len(opens))
+    local_min_bar_2=np.zeros(len(opens))
+    local_max_2=np.zeros(len(opens))
+    local_min_2=np.zeros(len(opens))
+    
+    prev_candle_0_color=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_1_color=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_2_color=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_3_color=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_4_color=np.zeros(len(opens),dtype=np.float64)
+    
+    prev_candle_0_rsi=np.zeros(len(opens))
+    prev_candle_1_rsi=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_2_rsi=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_3_rsi=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_4_rsi=np.zeros(len(opens),dtype=np.float64)
+    
+    prev_candle_0_macd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_1_macd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_2_macd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_3_macd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_4_macd=np.zeros(len(opens),dtype=np.float64)
+    
+    prev_candle_0_slowk=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_1_slowk=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_2_slowk=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_3_slowk=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_4_slowk=np.zeros(len(opens),dtype=np.float64)
+    
+    prev_candle_0_slowd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_1_slowd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_2_slowd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_3_slowd=np.zeros(len(opens),dtype=np.float64)
+    prev_candle_4_slowd=np.zeros(len(opens),dtype=np.float64)
+    
+    
+    prev_candle_0_volume=np.zeros(len(opens))
+    prev_candle_1_volume=np.zeros(len(opens))
+    prev_candle_2_volume=np.zeros(len(opens))
+    prev_candle_3_volume=np.zeros(len(opens))
+    prev_candle_4_volume=np.zeros(len(opens))
+    
+    indication = 0
+    buy_search=0
+    sell_search=1
+    change_index=0
+    i=-1
+    while(i<len(opens)):
+        i=i+1
         
+        if (indication == 0) & (sell_search == 1) & (buy_search == 0) & (change_index == i):
+            
+            sell_search=0
+            flag=0
+            trade= 5
+            while (indication == 0):
+                
+                entry = closes[i]
+                tp = entry - (entry * profit_perc)
+                sl = entry + (entry * sl_perc)
+                
+                upper[i]=upper_bands[i]
+                lower[i]=lower_bands[i]
+                
+                
+                entries[i]=entry
+                tps[i]=tp
+                signals[i]=2
+                local_max[i]=highs[i+1]
+                local_min[i]=lows[i+1]
+                local_max_2[i]=highs[i+2]
+                local_min_2[i]=lows[i+2]
+                next_colors[i]=colors[i+1]
+                next_close[i]=closes[i+1]
+                
+                prev_candle_0_color[i]=colors[i]    
+                prev_candle_1_color[i]=colors[i-1] 
+                prev_candle_2_color[i]=colors[i-2]
+                prev_candle_3_color[i]=colors[i-3]
+                prev_candle_4_color[i]=colors[i-4]
+                
+                prev_candle_0_rsi[i]=rsis[i]  
+                prev_candle_1_rsi[i]=rsis[i-1]
+                prev_candle_2_rsi[i]=rsis[i-2]
+                prev_candle_3_rsi[i]=rsis[i-3]
+                prev_candle_4_rsi[i]=rsis[i-4]
+                
+                prev_candle_0_macd[i]=macdhists[i]   
+                prev_candle_1_macd[i]=macdhists[i-1]
+                prev_candle_2_macd[i]=macdhists[i-2]
+                prev_candle_3_macd[i]=macdhists[i-3]
+                prev_candle_4_macd[i]=macdhists[i-4]
+                
+                prev_candle_0_slowk[i]=slowks[i]  
+                prev_candle_1_slowk[i]=slowks[i-1]
+                prev_candle_2_slowk[i]=slowks[i-2]
+                prev_candle_3_slowk[i]=slowks[i-3]
+                prev_candle_4_slowk[i]=slowks[i-4]
+                
+                prev_candle_0_slowd[i]=slowds[i]   
+                prev_candle_1_slowd[i]=slowds[i-1]
+                prev_candle_2_slowd[i]=slowds[i-2]
+                prev_candle_3_slowd[i]=slowds[i-3]
+                prev_candle_4_slowd[i]=slowds[i-4]
+                
+                 
+                prev_candle_0_volume[i]=volumes[i]   
+                prev_candle_1_volume[i]=volumes[i-1] 
+                prev_candle_2_volume[i]=volumes[i-2]
+                prev_candle_3_volume[i]=volumes[i-3]
+                prev_candle_4_volume[i]=volumes[i-4]
+                
+                
+                
+                
+            
+                for j in range(i+1,len(opens)):
+                    candle_count[i]=candle_count[i]+1
+                    if candle_count[i] > 2:
+                        if lows[j] < local_min_2[i]:
+                            local_min_2[i]=lows[j]
+                            local_min_bar_2[i]=candle_count[i]
+                        if highs[j]>local_max_2[i]:
+                            local_max_2[i]=highs[j]
+                            local_max_bar_2[i]=candle_count[i]
+
+                    if lows[j] < local_min[i]:
+                        local_min[i]=lows[j]
+                        local_min_bar[i]=candle_count[i]
+                    if highs[j]>local_max[i]:
+                        local_max[i]=highs[j]
+                        local_max_bar[i]=candle_count[i]
+
+                    if lows[j] < tp and flag==0:
+
+                        trades[i] = 1
+                        close_prices[i]=tp
+                        time_index[i]=i
+                        
+                        indication=1
+                        buy_search=1
+                        flag=1
+                        
+                        
+                    elif (highs[j] > sl and flag==0) or (in_uptrends[j] == 'True'):
+                        if highs[j] > sl and flag==0:
+                            trades[i] = 0
+                            close_prices[i]=sl
+                            time_index[i]=i
+
+                            indication=1
+                            buy_search=1
+                            flag=1
+                            
+                        if in_uptrends[j] == 'True':
+                            
+
+                            if trades[i] ==1:
+                                change_index=j
+                            elif trades[i] == 0 and flag ==1:
+                                change_index=j
+                            else:
+                                trades[i] = 0
+                                close_prices[i]=closes[j]
+                                time_index[i]=i
+                                change_index=j
+                            
+                            indication=1
+                            buy_search=1
+                            break
+                    else:
+                        pass
+                break
+        elif (indication == 1 ) & (sell_search == 0) & (buy_search == 1) & (change_index==i):
+            
+            buy_search= 0
+            flag=0
+
+            while (indication == 1):
+
+
+                entry = closes[i]
+                tp = entry + (entry * profit_perc)
+                sl = entry - (entry * sl_perc)
+                
+                upper[i]=upper_bands[i]
+                lower[i]=lower_bands[i]
+                
+                entries[i]=entry
+                tps[i]=tp
+                signals[i]=1
+                local_max[i]=highs[i+1]  
+                local_min[i]=lows[i+1]
+                next_colors[i]=colors[i+1]
+                local_max_2[i]=highs[i+2]
+                local_min_2[i]=lows[i+2]
+                
+                prev_candle_0_color[i]=colors[i]    
+                prev_candle_1_color[i]=colors[i-1] 
+                prev_candle_2_color[i]=colors[i-2]
+                prev_candle_3_color[i]=colors[i-3]
+                prev_candle_4_color[i]=colors[i-4]
+                
+                prev_candle_0_rsi[i]=rsis[i]  
+                prev_candle_1_rsi[i]=rsis[i-1]
+                prev_candle_2_rsi[i]=rsis[i-2]
+                prev_candle_3_rsi[i]=rsis[i-3]
+                prev_candle_4_rsi[i]=rsis[i-4]
+                
+                prev_candle_0_macd[i]=macdhists[i]   
+                prev_candle_1_macd[i]=macdhists[i-1]
+                prev_candle_2_macd[i]=macdhists[i-2]
+                prev_candle_3_macd[i]=macdhists[i-3]
+                prev_candle_4_macd[i]=macdhists[i-4]
+                
+                prev_candle_0_slowk[i]=slowks[i]  
+                prev_candle_1_slowk[i]=slowks[i-1]
+                prev_candle_2_slowk[i]=slowks[i-2]
+                prev_candle_3_slowk[i]=slowks[i-3]
+                prev_candle_4_slowk[i]=slowks[i-4]
+                
+                prev_candle_0_slowd[i]=slowds[i]   
+                prev_candle_1_slowd[i]=slowds[i-1]
+                prev_candle_2_slowd[i]=slowds[i-2]
+                prev_candle_3_slowd[i]=slowds[i-3]
+                prev_candle_4_slowd[i]=slowds[i-4]
+                
+                 
+                prev_candle_0_volume[i]=volumes[i]   
+                prev_candle_1_volume[i]=volumes[i-1] 
+                prev_candle_2_volume[i]=volumes[i-2]
+                prev_candle_3_volume[i]=volumes[i-3]
+                prev_candle_4_volume[i]=volumes[i-4]
+                
+                next_close[i]=closes[i+1]
+                
+                
+                
+                
+                for j in range(i+1,len(opens)):
+                    candle_count[i]=candle_count[i]+1
+                    if candle_count[i] > 2:
+                        if lows[j] < local_min_2[i]:
+                            local_min_2[i]=lows[j]
+                            local_min_bar_2[i]=candle_count[i]
+                        if highs[j]>local_max_2[i]:
+                            local_max_2[i]=highs[j]
+                            local_max_bar_2[i]=candle_count[i]
+                    if lows[j] < local_min[i]:
+                        local_min[i]=lows[j]
+                        local_min_bar[i]=candle_count[i]
+                    if highs[j]>local_max[i]:
+                        local_max[i]=highs[j]
+                        local_max_bar[i]=candle_count[i]
+                        
+                    
+                    if highs[j] > tp and flag==0 :
+                        trades[i]  = 1
+                        sell_search=1
+                        close_prices[i]=tp
+                        time_index[i]=i
+                        
+
+                        flag=1
+                        indication=0
+                    elif (lows[j] < sl and flag==0) or (in_uptrends[j] == 'False'):
+                        if lows[j] < sl and flag==0:
+
+                            trades[i]= 0
+                            close_prices[i]=sl
+                            time_index[i]=i
+                            indication=0
+                            sell_search=1
+                            flag=1
+                            
+                        if in_uptrends[j] == 'False':
+                            
+                            if trades[i] ==1:
+                                change_index=j
+                            elif trades[i] == 0 and flag ==1:
+                                change_index=j
+                            else:
+                                trades[i] = 0
+                                close_prices[i]=closes[j]
+                                time_index[i]=i
+                                change_index=j
+                            
+                            indication=0
+                            sell_search=1
+                            break
+
+                    
+                        
+                    else:
+                        pass
+                break
+        else:
+            continue
         
+    return entries,signals,tps,trades,close_prices,time_index,candle_count,local_max,local_min,local_max_bar,local_min_bar,upper,lower,next_colors,next_close, \
+            prev_candle_0_color,prev_candle_1_color,prev_candle_2_color,prev_candle_3_color,prev_candle_4_color, \
+                prev_candle_0_rsi,prev_candle_1_rsi,prev_candle_2_rsi,prev_candle_3_rsi,prev_candle_4_rsi, \
+                    prev_candle_0_macd,prev_candle_1_macd,prev_candle_2_macd,prev_candle_3_macd,prev_candle_4_macd, \
+                        prev_candle_0_slowk,prev_candle_1_slowk,prev_candle_2_slowk,prev_candle_3_slowk,prev_candle_4_slowk, \
+                            prev_candle_0_slowd,prev_candle_1_slowd,prev_candle_2_slowd,prev_candle_3_slowd,prev_candle_4_slowd, \
+                                prev_candle_0_volume,prev_candle_1_volume,prev_candle_2_volume,prev_candle_3_volume,prev_candle_4_volume, \
+                                    local_max_bar_2,local_min_bar_2,local_max_2,local_min_2   
+
+
+def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
+    opens=super_df['open'].to_numpy(dtype='float64')
+    highs=super_df['high'].to_numpy(dtype='float64')
+    lows=super_df['low'].to_numpy(dtype='float64')
+    closes=super_df['close'].to_numpy(dtype='float64')
+    in_uptrends=super_df['in_uptrend'].to_numpy(dtype='U5')
+    upper_bands=super_df['upperband'].to_numpy(dtype='float64')
+    lower_bands=super_df['lowerband'].to_numpy(dtype='float64')
+    colors=super_df['color'].to_numpy(dtype='float64')
+    
+    super_df['rsi']=round(super_df['rsi'],2)
+    rsis=super_df['rsi'].to_numpy(dtype='float64')
+   
+    macdhists=super_df['macdhist'].to_numpy(dtype=np.float64)
+    slowks=super_df['slowk'].to_numpy(dtype=np.float64)
+   
+    slowds=super_df['slowd'].to_numpy(dtype=np.float64)
+    volumes=super_df['volume'].to_numpy(dtype=np.float64)
+    
+    
+
+    
+  
+    entries,signals,tps,trades,close_prices,time_index,candle_count,local_max,local_min,local_max_bar,local_min_bar,upper,lower,colors,next_close, \
+        prev_candle_0_color,prev_candle_1_color,prev_candle_2_color,prev_candle_3_color,prev_candle_4_color, \
+            prev_candle_0_rsi,prev_candle_1_rsi,prev_candle_2_rsi,prev_candle_3_rsi,prev_candle_4_rsi, \
+                prev_candle_0_macd,prev_candle_1_macd,prev_candle_2_macd,prev_candle_3_macd,prev_candle_4_macd, \
+                    prev_candle_0_slowk,prev_candle_1_slowk,prev_candle_2_slowk,prev_candle_3_slowk,prev_candle_4_slowk, \
+                        prev_candle_0_slowd,prev_candle_1_slowd,prev_candle_2_slowd,prev_candle_3_slowd,prev_candle_4_slowd, \
+                            prev_candle_0_volume,prev_candle_1_volume,prev_candle_2_volume,prev_candle_3_volume,prev_candle_4_volume, \
+                                local_max_bar_2,local_min_bar_2,local_max_2,local_min_2 =cal_numba(opens,highs,lows,closes,in_uptrends,profit,sl,upper_bands,lower_bands,colors,rsis,macdhists,slowks,slowds,volumes)
+    
+    trade_df=pd.DataFrame({'signal':signals,'entry':entries,'tp':tps,'trade':trades,'close_price':close_prices,'candle_count':candle_count,
+                           'local_max':local_max,'local_min':local_min,'local_max_bar':local_max_bar,'local_min_bar':local_min_bar,
+                           'upper_band':upper,'lower_band':lower,'next_color':colors,'next_close':next_close,
+                           'prev_candle_0_color':prev_candle_0_color,'prev_candle_1_color':prev_candle_1_color,'prev_candle_2_color':prev_candle_2_color,'prev_candle_3_color':prev_candle_3_color,'prev_candle_4_color':prev_candle_4_color,
+                           'prev_candle_0_rsi':prev_candle_0_rsi,'prev_candle_1_rsi':prev_candle_1_rsi,'prev_candle_2_rsi':prev_candle_2_rsi,'prev_candle_3_rsi':prev_candle_3_rsi,'prev_candle_4_rsi':prev_candle_4_rsi,
+                           'prev_candle_0_macd':prev_candle_0_macd,'prev_candle_1_macd':prev_candle_1_macd,'prev_candle_2_macd':prev_candle_2_macd,'prev_candle_3_macd':prev_candle_3_macd,'prev_candle_4_macd':prev_candle_4_macd,
+                           'prev_candle_0_slowk':prev_candle_0_slowk,'prev_candle_1_slowk':prev_candle_1_slowk,'prev_candle_2_slowk':prev_candle_2_slowk,'prev_candle_3_slowk':prev_candle_3_slowk,'prev_candle_4_slowk':prev_candle_4_slowk,
+                            'prev_candle_0_slowd':prev_candle_0_slowd,'prev_candle_1_slowd':prev_candle_1_slowd,'prev_candle_2_slowd':prev_candle_2_slowd,'prev_candle_3_slowd':prev_candle_3_slowd,'prev_candle_4_slowd':prev_candle_4_slowd,   
+                            'prev_candle_0_volume':prev_candle_0_volume,'prev_candle_1_volume':prev_candle_1_volume,'prev_candle_2_volume':prev_candle_2_volume,'prev_candle_3_volume':prev_candle_3_volume,'prev_candle_4_volume':prev_candle_4_volume,
+                                               'local_max_bar_2':local_max_bar_2,'local_min_bar_2':local_min_bar_2,'local_max_2':local_max_2,'local_min_2':local_min_2 
+                           
+                           
+                           
+                           
+                           })
+    # before_drop=trade_df.shape[0]
+    # print(f'Number of columns before drop : {before_drop}')
+    
+    
+    trade_df_index=trade_df[trade_df['entry']!=0]
+    
+    indexes=trade_df_index.index.to_list()
+    
+    df=super_df
+    
+    print(df.shape[0])
+    print(trade_df.shape[0])
+    print(super_df.shape[0])
+    for i in indexes:
+        try:
+            trade_df.at[i,'TradeOpenTime']=df[df.index==i+1]['OpenTime'][(i+1)]
+        except KeyError:
+            trade_df.at[i,'TradeOpenTime']=(df[df.index==i]['OpenTime'][(i)]) 
+    for i in indexes:
+        try:
+            trade_df.at[i,'signalTime']=df[df.index==i]['OpenTime'][(i)]
+        except KeyError:
+            trade_df.at[i,'signalTime']=(df[df.index==i]['OpenTime'][(i)])
+            
+    trade_df['signal']=trade_df['signal'].apply(signal_decoding)
+    
+    trade_df.dropna(inplace=True)
+                        
+    entries=trade_df['entry'].to_numpy(dtype='float64')
+    closes=trade_df['close_price'].to_numpy(dtype='float64')
+    # trades=trade_df['trade'].to_numpy(dtype='U1')
+    signals=trade_df['signal'].to_numpy(dtype='U5')
+    outputs=np.zeros(len(entries))
+    
+   
+    
+    percentages=df_perc_cal(entries,closes,signals,outputs)
+    trade_df['percentage'] = percentages.tolist()
+    trade_df['trade']=trade_df['percentage'].apply(trade_decoding)
+    # after_drop=trade_df.shape[0]
+    # print(f'Number of columns after drop : {after_drop}')
+    trade_df=trade_df.reset_index(drop=True)
+    if (trade_df['percentage'][trade_df.shape[0]-1]==-1) | (trade_df['percentage'][trade_df.shape[0]-1]==1):
+        trade_df=trade_df[:-1]
+    else:
+        pass
+    trade_df['signalTime']=pd.to_datetime(trade_df['signalTime'])
+    super_df['OpenTime']=pd.to_datetime(super_df['OpenTime'])
+    
+    trade_df=pd.merge(trade_df, super_df, how='left', left_on=['signalTime'], right_on = ['OpenTime'])
+    
+    trade_df=trade_df[['signal',
+    'entry',
+    'tp',
+    'trade',
+    'close_price',
+    'TradeOpenTime',
+    'percentage',
+    'OpenTime',
+    'hour',
+    'minute','day',
+    'month',
+    'size','ma_7','ma_25','ma_99',
+    'ema_9',
+    'ma_40','ma_55','ema_20','ema_5','ema_55','ma_100','ma_200','ema_100','ema_200',
+    'ema_33',
+    'rsi',
+    'macd',
+    'macdsignal',
+    'macdhist',
+    'slowk',
+    'slowd',
+    'candle_count',
+    'local_max','local_min',
+    'local_max_bar','local_min_bar',
+    'upper_band','lower_band','next_color','next_close',
+    'prev_candle_0_color','prev_candle_1_color','prev_candle_2_color','prev_candle_3_color','prev_candle_4_color', \
+            'prev_candle_0_rsi','prev_candle_1_rsi','prev_candle_2_rsi','prev_candle_3_rsi','prev_candle_4_rsi', \
+                'prev_candle_0_macd','prev_candle_1_macd','prev_candle_2_macd','prev_candle_3_macd','prev_candle_4_macd', \
+                    'prev_candle_0_slowk','prev_candle_1_slowk','prev_candle_2_slowk','prev_candle_3_slowk','prev_candle_4_slowk', \
+                        'prev_candle_0_slowd','prev_candle_1_slowd','prev_candle_2_slowd','prev_candle_3_slowd','prev_candle_4_slowd', \
+                            'prev_candle_0_volume','prev_candle_1_volume','prev_candle_2_volume','prev_candle_3_volume','prev_candle_4_volume',
+                            'local_max_bar_2','local_min_bar_2','local_max_2','local_min_2']]
+    
+    trade_df=trade_df.dropna()
+    trade_df=trade_df[2:]
+    trade_df.to_csv(f'data/file.csv',index=False,mode='w+')
+    
+    return trade_df        
 telegram_auth_token='5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
-telegram_group_id='notifier2_scanner_bot_link'        
+telegram_group_id='notifier2_scanner_bot_link' 
+
+
+def signal_decoding(x):
+    if x == 1:
+        return 'Buy'
+    else:
+        return 'Sell'
+    
+def trade_decoding(x):
+    if x > 0:
+        return 'W'
+    else:
+        return 'L'
+    
+@njit
+def df_perc_cal(entries,closes,signals,percentages):
+    for i in range(0,len(entries)):
+        if signals[i]=='Buy':
+            percentages[i]=(closes[i]-entries[i])/entries[i]
+        else:
+            percentages[i]=-(closes[i]-entries[i])/entries[i]
+    return percentages
+    
         
 def notifier(message,tries=0):
     telegram_api_url=f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage?chat_id=@{telegram_group_id}&text={message}'
@@ -230,6 +725,23 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
+
+                        trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+                        # Add 'Year' and 'Week' columns to the DataFrame
+                        trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar().year
+                        trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar().week
+
+                        # Group by the 'Year' and 'Week' columns and sum the 'percentage' column
+                        df_weekly = trade_df.groupby(['Year', 'Week'])['percentage'].sum().reset_index()
+                        current_week = pd.to_datetime(datetime.now()).isocalendar().week
+                        current_year =pd.to_datetime(datetime.now()).isocalendar().year
+                        previousWeekPercentage = df_weekly[(df_weekly['Week']==(current_week-1)) & (df_weekly['Year']==current_year)]['percentage'].values[0]
+                       
+                        if previousWeekPercentage < 0:
+                            risk = 0.04
+                        else:
+                            risk = 0.02
+                        
                         lock.acquire()
                         
                         try:
@@ -272,7 +784,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     
                         
                         
-                        rr=4
+                        rr=17
                         
                         if signal == 'Buy' and ma_pos == 1:
                             #buy order
@@ -294,6 +806,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                     priceProtect=True  
                                     )
                             in_trade_usdt.value=1
+                            notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                             notifier(f'Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
@@ -319,6 +832,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                                     priceProtect=True  
                                                     )
                             in_trade_usdt.value=1
+                            notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')                          
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                             notifier(f'Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
