@@ -683,6 +683,7 @@ def notifier(message,tries=0):
             
         
 def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
+    print(f'timeframe : {timeframe}')
     notifier(f'Starting USDT function,SARAVANA BHAVA' )
     restart=0
     while(True):
@@ -894,6 +895,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             
 def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
     notifier(f'Starting BUSD function,SARAVANA BHAVA')
+    print(f'timeframe : {timeframe}')
     restart=0
     
     while(True):
