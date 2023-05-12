@@ -683,7 +683,7 @@ def notifier(message,tries=0):
             
         
 def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
-    notifier(f'Starting USDT function,SARAVANA BHAVA')
+    notifier(f'Starting USDT function,SARAVANA BHAVA' )
     restart=0
     while(True):
         if restart==1:
@@ -692,6 +692,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
         try:
             ws = websocket.WebSocket()
             ws.connect(f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
+            notifier(f'Started USDT function : {timeframe}')
             ws.settimeout(15)
             risk=0.02
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=998)
@@ -903,6 +904,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             ws = websocket.WebSocket()
             ws.connect(f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             ws.settimeout(15)
+            notifier(f'Started BUSD function : {timeframe}' )
             risk=0.02
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
