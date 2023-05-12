@@ -512,8 +512,8 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     lows=super_df['low'].to_numpy(dtype='float64')
     closes=super_df['close'].to_numpy(dtype='float64')
     in_uptrends=super_df['in_uptrend'].to_numpy(dtype='U5')
-    upper_bands=super_df['upperband'].to_numpy(dtype='float64')
-    lower_bands=super_df['lowerband'].to_numpy(dtype='float64')
+    upper_bands=super_df['upper_band'].to_numpy(dtype='float64')
+    lower_bands=super_df['lower_band'].to_numpy(dtype='float64')
     colors=super_df['color'].to_numpy(dtype='float64')
     
     super_df['rsi']=round(super_df['rsi'],2)
@@ -864,7 +864,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             information=client.futures_account()
                             totalUnrealizedProfit=round(float(information['totalUnrealizedProfit']),2)
                             bal=round(float(information['totalCrossWalletBalance']),2)
-                            if bal > 173: #Month initial
+                            if bal > 50: #Month initial
                                 bal_pos='Profit'
                             else:
                                 bal_pos='Loss'
