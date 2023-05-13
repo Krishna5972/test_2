@@ -16,14 +16,24 @@ import json
 from datetime import datetime
 from numba import njit
 
+
+def candle_size(x,coin):
+    return abs(((x['close']-x['open'])/x['open'])*100)
+
 def supertrend(coin,df, period, atr_multiplier,pivot_period):
+    
+    
     pivot_period=pivot_period
     trend_atr=atr_multiplier
     trend_period=period
-        
-    # df['OpenTime']=pd.to_datetime(df['OpenTime'])
     
     
+    df['OpenTime']=pd.to_datetime(df['OpenTime'])
+    
+    df['size']=df.apply(candle_size,axis=1,coin=coin)
+    
+    df['ma_7']=talib.MA(df['close'], timeperiod=7)
+    df['ma_25']=talib.MA(df['close'], timeperiod=25)
     df['ma_40']=talib.MA(df['close'], timeperiod=40)
     df['ma_55']=talib.MA(df['close'], timeperiod=55)
     df['ma_99']=talib.MA(df['close'], timeperiod=99)
@@ -31,17 +41,30 @@ def supertrend(coin,df, period, atr_multiplier,pivot_period):
     df['ma_200']=talib.MA(df['close'], timeperiod=200)
 
     
-    df['ema_5']=talib.EMA(df['close'], timeperiod=5)
-
+    
+    df['ema_5']=talib.EMA(df['close'],5)
+    df['ema_20']=talib.EMA(df['close'],20)
     df['ema_55']=talib.EMA(df['close'],55)
     df['ema_100']=talib.EMA(df['close'],100)
     df['ema_200']=talib.EMA(df['close'],200)
     
-
+    df['ema_9']=talib.EMA(df['close'],9)
     
     df['prev_close']=df['close'].shift(1)
     df['prev_open']=df['open'].shift(1)
+    
+    df['color']=df.apply(lambda x: 1 if x['close']>x['open'] else -1,axis=1)
+    
 
+    df['ema_33']=talib.EMA(df['close'],33)
+    df['rsi'] = talib.RSI(df['close'], timeperiod=14)
+    df['macd'],df['macdsignal'],df['macdhist']=talib.MACD(df['close'], fastperiod=12, slowperiod=26, signalperiod=9)
+
+
+    df['slowk'], df['slowd'] = talib.STOCH(df['high'],df['low'],df['close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+    
+    
+    
     
     df['pivot_high'] = pivot(df['high'], pivot_period, pivot_period, 'high')
     df['pivot_low'] = pivot(df['low'], pivot_period, pivot_period, 'low')
