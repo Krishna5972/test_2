@@ -29,9 +29,9 @@ def supertrend(coin,df, period, atr_multiplier,pivot_period):
     trend_atr=atr_multiplier
     trend_period=period
     
-    
-    df['OpenTime']=pd.to_datetime(df['OpenTime'])
-    
+    mask = df['OpenTime'].apply(lambda x: isinstance(x, int))
+    df.loc[mask, 'OpenTime'] = pd.to_datetime(df.loc[mask, 'OpenTime'])
+   
     df['size']=df.apply(candle_size,axis=1,coin=coin)
     
     df['ma_7']=talib.MA(df['close'], timeperiod=7)
