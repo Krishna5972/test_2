@@ -926,7 +926,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             ws.close()
             tb = traceback.extract_tb(sys.exc_info()[2])
             filename, line, func, text = tb[-1]
-            print(f'An error occurred on line USDT {line}: {e}')
+            print(f'An error occurred on line USDT {line}: {err}')
             time.sleep(10)
 
 
