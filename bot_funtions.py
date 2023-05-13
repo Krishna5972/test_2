@@ -696,7 +696,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             notifier(f'Started USDT function : {timeframe}')
             ws.settimeout(15)
             risk=0.02
-            bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=998)
+            bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
             df.drop(['OpenTime'],axis=1,inplace=True)
             x_str = str(df['close'].iloc[-1])
@@ -739,11 +739,22 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         current_year =pd.to_datetime(datetime.now()).isocalendar().year
                         previousWeekPercentage = df_weekly[(df_weekly['Week']==(current_week-1)) & (df_weekly['Year']==current_year)]['percentage'].values[0]
                        
+                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
+                        lastTradePerc = trade_df.iloc[-1]['percentage']
+                        lastTradeOutcome = trade_df.iloc[-1]['trade']
+                        notifier(f'from USDT previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
+                        
                         if previousWeekPercentage < 0:
                             risk = 0.04
                         else:
                             risk = 0.02
                         
+                        if trade_df['trade'].iloc[-1]=='W':
+                            notifier('Last one was a win reducing the risk')
+                            risk = risk/2
+
+
+
                         lock.acquire()
                         
                         try:
@@ -908,7 +919,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             ws.settimeout(15)
             notifier(f'Started BUSD function : {timeframe}' )
             risk=0.02
-            bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=998)
+            bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
             df.drop(['OpenTime'],axis=1,inplace=True)
             x_str = str(df['close'].iloc[-1])
@@ -940,6 +951,22 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
+
+                        trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+                       
+                        time.sleep(1)
+                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
+                        lastTradePerc = trade_df.iloc[-1]['percentage']
+                        lastTradeOutcome = trade_df.iloc[-1]['trade']
+                        notifier(f'previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
+                        if trade_df['trade'].iloc[-1]=='W':
+                            notifier('Last one was a win reducing the risk')
+                            risk = risk/2
+
+                        if trade_df['trade'].iloc[-1]=='W' & trade_df['trade'].iloc[-2]=='W':
+                            notifier('Last two were wins reducing the risk drastically')
+                            risk = risk/3
+
                         lock.acquire()
                         
                         try:
