@@ -740,8 +740,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                 data = json.loads(result)
                 if data['k']['x']==True:
                     candle=data['k']
-                    candle_data=[candle['o'],candle['h'],candle['l'],candle['c'],candle['v']]
-                    temp_df = pd.DataFrame([candle_data], columns=['open', 'high', 'low', 'close', 'volume'])
+                    candle_data=[candle['t'],candle['o'],candle['h'],candle['l'],candle['c'],candle['v']]
+                    temp_df = pd.DataFrame([candle_data], columns=['OpenTime','open', 'high', 'low', 'close', 'volume'])
                     df=pd.concat([df,temp_df])
                     df=df[2:]
                     df=df.reset_index(drop=True)
@@ -964,8 +964,8 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                 data = json.loads(result)
                 if data['k']['x']==True:
                     candle=data['k']
-                    candle_data=[candle['o'],candle['h'],candle['l'],candle['c'],candle['v']]
-                    temp_df = pd.DataFrame([candle_data], columns=['open', 'high', 'low', 'close', 'volume'])
+                    candle_data=[candle['t'],candle['o'],candle['h'],candle['l'],candle['c'],candle['v']]
+                    temp_df = pd.DataFrame([candle_data], columns=['OpenTime','open', 'high', 'low', 'close', 'volume'])                    
                     df=pd.concat([df,temp_df])
                     df=df[2:]
                     df=df.reset_index(drop=True)
