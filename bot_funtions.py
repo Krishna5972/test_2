@@ -15,6 +15,8 @@ import pandas as pd
 import json
 from datetime import datetime
 from numba import njit
+import traceback
+import sys
 
 
 def candle_size(x,coin):
@@ -922,6 +924,9 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             print(err)
             restart=1
             ws.close()
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            filename, line, func, text = tb[-1]
+            print(f'An error occurred on line USDT {line}: {e}')
             time.sleep(10)
 
 
@@ -1060,6 +1065,9 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             notifier(f'Restarting BUSD function : {coin}')
             print(e)
             ws.close()
+            tb = traceback.extract_tb(sys.exc_info()[2])
+            filename, line, func, text = tb[-1]
+            print(f'An error occurred on line USDT {line}: {e}')
             time.sleep(10)
             restart=1
 
