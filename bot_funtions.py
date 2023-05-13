@@ -723,7 +723,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             risk=0.005
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
-            df.drop(['OpenTime'],axis=1,inplace=True)
+            #df.drop(['OpenTime'],axis=1,inplace=True)
             x_str = str(df['close'].iloc[-1])
             decimal_index = x_str.find('.')
             round_price = len(x_str) - decimal_index - 1
@@ -950,7 +950,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             risk=0.005
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
-            df.drop(['OpenTime'],axis=1,inplace=True)
+            #df.drop(['OpenTime'],axis=1,inplace=True)
             x_str = str(df['close'].iloc[-1])
             decimal_index = x_str.find('.')
             round_price = len(x_str) - decimal_index - 1
