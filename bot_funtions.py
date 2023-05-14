@@ -637,9 +637,7 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     'TradeOpenTime',
     'percentage',
     'OpenTime',
-    'hour',
-    'minute','day',
-    'month',
+    
     'size','ma_7','ma_25','ma_99',
     'ema_9',
     'ma_40','ma_55','ema_20','ema_5','ema_55','ma_100','ma_200','ema_100','ema_200',
@@ -652,8 +650,7 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     'slowd',
     'candle_count',
     'local_max','local_min',
-    'local_max_bar','local_min_bar',
-    'upper_band','lower_band','next_color','next_close',
+    'local_max_bar','local_min_bar','next_color','next_close',
     'prev_candle_0_color','prev_candle_1_color','prev_candle_2_color','prev_candle_3_color','prev_candle_4_color', \
             'prev_candle_0_rsi','prev_candle_1_rsi','prev_candle_2_rsi','prev_candle_3_rsi','prev_candle_4_rsi', \
                 'prev_candle_0_macd','prev_candle_1_macd','prev_candle_2_macd','prev_candle_3_macd','prev_candle_4_macd', \
