@@ -661,7 +661,7 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     
     trade_df=trade_df.dropna()
     trade_df=trade_df[2:]
-    trade_df.to_csv(f'data/file.csv',index=False,mode='w+')
+    #trade_df.to_csv(f'data/file.csv',index=False,mode='w+')
     
     return trade_df        
 telegram_auth_token='5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
