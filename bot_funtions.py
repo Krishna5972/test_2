@@ -752,13 +752,13 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
                         # Add 'Year' and 'Week' columns to the DataFrame
-                        trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar().year
-                        trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar().week
+                        trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar()[0]
+                        trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar()[1]
 
                         # Group by the 'Year' and 'Week' columns and sum the 'percentage' column
                         df_weekly = trade_df.groupby(['Year', 'Week'])['percentage'].sum().reset_index()
-                        current_week = pd.to_datetime(datetime.now()).isocalendar().week
-                        current_year =pd.to_datetime(datetime.now()).isocalendar().year
+                        current_week = pd.to_datetime(datetime.now()).isocalendar()[1]
+                        current_year =pd.to_datetime(datetime.now()).isocalendar()[0]
                         previousWeekPercentage = df_weekly[(df_weekly['Week']==(current_week-1)) & (df_weekly['Year']==current_year)]['percentage'].values[0]
                        
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
@@ -979,6 +979,10 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
 
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+
+                        trade_df.to_csv('trade_df.csv')
+
+                        send_mail('trade_df.csv')
                        
                         time.sleep(1)
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
@@ -989,7 +993,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                             notifier('Last one was a win reducing the risk')
                             risk = risk/2
 
-                        if trade_df['trade'].iloc[-1]=='W' & trade_df['trade'].iloc[-2]=='W':
+                        if trade_df['trade'].iloc[-1]=='W' and trade_df['trade'].iloc[-2]=='W':
                             notifier('Last two were wins reducing the risk drastically')
                             risk = risk/3
 
