@@ -754,6 +754,11 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
                         risk=0.02
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+
+                        trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
+                        trade_df['pos_signal']=trade_df.apply(lambda x:1 if x['signal']=='Buy' and x['ema_signal']==1 else (1 if x['signal']=='Sell' and x['ema_signal']==-1 else 0),axis=1)
+                        trade_df=trade_df[trade_df['pos_signal']==1]
+
                         # Add 'Year' and 'Week' columns to the DataFrame
                         trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar().year
                         trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar().week
@@ -773,8 +778,12 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         for i in range(-2, -len(super_df)-1, -1):
                             print(i,super_df['in_uptrend'].iloc[i],str(last_trend))
                             if str(super_df['in_uptrend'].iloc[i]) != str(last_trend):
-                                print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                break
+                                if str(last_trend) == 'False' and super_df.iloc[i+1][f'{ma_condition}_pos'] ==  -1:    
+                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
+                                    break
+                                elif str(last_trend) == 'True' and super_df.iloc[i+1][f'{ma_condition}_pos'] == 1:    
+                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
+                                    break
                         trend_open_1=super_df.iloc[i+1]['in_uptrend']  #openprice
                         time_open_1=super_df.iloc[i+1]['OpenTime'] 
                         price_open_1 = super_df.iloc[i+1]['close'] 
@@ -1024,12 +1033,21 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
 
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
-                       
+                        trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
+                        trade_df['pos_signal']=trade_df.apply(lambda x:1 if x['signal']=='Buy' and x['ema_signal']==1 else (1 if x['signal']=='Sell' and x['ema_signal']==-1 else 0),axis=1)
+                        trade_df=trade_df[trade_df['pos_signal']==1]
+
+
                         last_trend = super_df['in_uptrend'].iloc[-2]
                         for i in range(-2, -len(super_df)-1, -1):
                             if str(super_df['in_uptrend'].iloc[i]) != str(last_trend):
-                                print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                break
+                                if str(last_trend) == 'False' and super_df.iloc[i+1][f'{ma_condition}_pos'] ==  -1:    
+                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
+                                    break
+                                elif str(last_trend) == 'True' and super_df.iloc[i+1][f'{ma_condition}_pos'] == 1:    
+                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
+                                    break
+                                
                         trend_open_1=super_df.iloc[i+1]['in_uptrend']  #openprice
                         time_open_1=super_df.iloc[i+1]['OpenTime'] 
                         price_open_1 = super_df.iloc[i+1]['close'] 
