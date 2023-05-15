@@ -807,7 +807,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         notifier(f'from USDT previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
                         
                         if previousWeekPercentage < 0:
-                            risk = 0.04
+                            risk = 0.03
                         else:
                             risk = 0.02
                         
