@@ -766,7 +766,9 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             previousWeekPercentage = df_weekly[(df_weekly['Week']==(current_week-1)) & (df_weekly['Year']==current_year)]['percentage'].values[0]
                         except Exception as week:
                             previousWeekPercentage = 0
-                            
+
+                        
+                        notifier(f'Previous week percentage : {previousWeekPercentage}')  
                         last_trend = super_df['in_uptrend'].iloc[-2]
                         for i in range(-2, -len(super_df)-1, -1):
                             print(i,super_df['in_uptrend'].iloc[i],str(last_trend))
