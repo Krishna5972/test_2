@@ -1,0 +1,3 @@
+Bug in previous two trades information
+
+line 768

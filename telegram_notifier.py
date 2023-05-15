@@ -38,11 +38,11 @@ timeframes_dict={
 
 
 coin='ETH'
-timeframe_usdt='1m' 
-period_usdt=1
+timeframe_usdt='30m' 
+period_usdt=12
 atr1_usdt=1
-pivot_period_usdt=3
-ma_condition_usdt='ema_5'
+pivot_period_usdt=10
+ma_condition_usdt='ema_100'
 time_usdt=timeframes_dict[timeframe_usdt]
 
 while(True):
@@ -58,11 +58,11 @@ while(True):
         time.sleep(300)
 
 
-timeframe_busd='1m'  
-period_busd=1
+timeframe_busd='30m'  
+period_busd=12
 atr1_busd=1
-pivot_period_busd=3
-ma_condition_busd='ema_5'
+pivot_period_busd=10
+ma_condition_busd='ema_100'
 time_busd=timeframes_dict[timeframe_busd]
 
 
@@ -79,6 +79,19 @@ if float(pos[0]['positionAmt']) !=0 or float(pos[1]['positionAmt']) !=0 or float
     in_trade_busd.value=1
 
 
+# condition_busdt(timeframe_usdt,
+#                                                     pivot_period_usdt,
+#                                                     atr1_usdt,
+#                                                     period_usdt,
+#                                                     ma_condition_usdt,
+#                                                     exchange
+#                                                     ,client,
+#                                                     coin,
+#                                                     time_usdt,
+#                                                     in_trade_usdt,
+#                                                     in_trade_busd,
+#                                                     lock)
+
 p1=multiprocessing.Process(target=condition_usdt,args=[timeframe_usdt,
                                                     pivot_period_usdt,
                                                     atr1_usdt,
@@ -93,17 +106,17 @@ p1=multiprocessing.Process(target=condition_usdt,args=[timeframe_usdt,
                                                     lock])
 
 p2=multiprocessing.Process(target=condition_busdt,args=[timeframe_busd,
-                                                        pivot_period_busd,
-                                                        atr1_busd,
-                                                        period_busd,
-                                                        ma_condition_busd,
-                                                        exchange,
-                                                        client,
-                                                        coin,
-                                                        time_busd,
-                                                        in_trade_usdt,
-                                                        in_trade_busd,
-                                                        lock])    
+                                                       pivot_period_busd,
+                                                       atr1_busd,
+                                                       period_busd,
+                                                       ma_condition_busd,
+                                                       exchange,
+                                                       client,
+                                                       coin,
+                                                       time_busd,
+                                                       in_trade_usdt,
+                                                       in_trade_busd,
+                                                       lock])    
             
 
 if __name__=='__main__':
