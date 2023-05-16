@@ -752,7 +752,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']            
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
-                        risk=0.002
+                        risk=0.02
+                        initialRisk = risk
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
@@ -773,8 +774,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             previousWeekPercentage = 0
 
                         
-                        notifier(f'Previous week percentage : {previousWeekPercentage}')  
-                        
+                        notifier(f'Previous week percentage : {previousWeekPercentage}')                     
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
                         trade_df['pos_signal']=trade_df.apply(lambda x:1 if x['signal']=='Buy' and x['ema_signal']==1 else (1 if x['signal']=='Sell' and x['ema_signal']==-1 else 0),axis=1)
@@ -788,17 +788,15 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         lastTradeOutcome = trade_df.iloc[-1]['trade'] 
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime'] 
                         
-                        
-                        notifier(f'from USDT previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
+                        notifier(f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} lastTradePerc : {lastTradePerc} lastTradeOutcome : {lastTradeOutcome}')
+
                         
                         if previousWeekPercentage < 0:
                             risk = 0.03
-                        else:
-                            risk = 0.02
                         
                         if lastTradeOutcome =='W':
                             notifier('Last one was a win reducing the risk')
-                            risk = risk/2
+                            risk = initialRisk/2
 
 
 
@@ -1007,9 +1005,9 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     super_df['condition']=0
                     
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
-                        risk=0.001
-                        super_df.to_csv('super_df.csv',mode='w+',index=False)
-                        df.to_csv('df.csv',index=False)
+                        risk=0.02
+                        #super_df.to_csv('super_df.csv',mode='w+',index=False)
+                       #df.to_csv('df.csv',index=False)
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
