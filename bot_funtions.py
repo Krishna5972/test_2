@@ -752,7 +752,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']            
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
-                        risk=0.02
+                        risk=0.002
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
@@ -774,45 +774,19 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         
                         notifier(f'Previous week percentage : {previousWeekPercentage}')  
-                        last_trend = super_df['in_uptrend'].iloc[-2]
-                        for i in range(-2, -len(super_df)-1, -1):
-                            print(i,super_df['in_uptrend'].iloc[i],str(last_trend))
-                            if str(super_df['in_uptrend'].iloc[i]) != str(last_trend):
-                                if str(last_trend) == 'False' and super_df.iloc[i+1][f'{ma_condition}_pos'] ==  -1:    
-                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                    break
-                                elif str(last_trend) == 'True' and super_df.iloc[i+1][f'{ma_condition}_pos'] == 1:    
-                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                    break
-                        trend_open_1=super_df.iloc[i+1]['in_uptrend']  #openprice
-                        time_open_1=super_df.iloc[i+1]['OpenTime'] 
-                        price_open_1 = super_df.iloc[i+1]['close'] 
+                        
 
-                        #closeprice
-                        time_close_1 = super_df.iloc[-1]['OpenTime'] 
-                        price_close_1= super_df.iloc[-1]['close'] 
+                        trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
+                        trade_df['pos_signal']=trade_df.apply(lambda x:1 if x['signal']=='Buy' and x['ema_signal']==1 else (1 if x['signal']=='Sell' and x['ema_signal']==-1 else 0),axis=1)
+                        trade_df=trade_df[trade_df['pos_signal']==1]
 
-                        print('==============================================================')
-                        print(f'{time_open_1,trend_open_1,price_open_1,time_close_1,price_close_1}')
 
-                        if str(trend_open_1) == str(False):
-                            print('Sell')
-                            if price_open_1 > price_close_1:
-                                lastTradeOutcome = 'W'
-                            else:
-                                lastTradeOutcome = 'L'
-                            lastTradePerc = (price_open_1-price_close_1)/price_open_1
-                        else:
-                            print('Buy')
-                            if price_open_1 < price_close_1:
-                                lastTradeOutcome = 'W'
-                            else:
-                                lastTradeOutcome = 'L'
-                            
-                            lastTradePerc = (price_close_1-price_open_1)/price_open_1
-
-                       
-                        lastTradeOpenTime =time_open_1
+                        trend_open_1 = trade_df.iloc[-1]['signal']
+                        price_open_1 = trade_df.iloc[-1]['entry']
+                        price_close_1 = trade_df.iloc[-1]['close_price'] 
+                        lastTradePerc = trade_df.iloc[-1]['percentage'] 
+                        lastTradeOutcome = trade_df.iloc[-1]['trade'] 
+                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime'] 
                         
                         
                         notifier(f'from USDT previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
@@ -877,7 +851,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                             notifier(f'Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            notifier(f'TP : {take_profit}')
+                            
                             #buy order
                             client.futures_create_order(symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='LONG')
 
@@ -897,13 +871,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                     priceProtect=True  
                                     )
                             in_trade_usdt.value=1
+                            notifier(f'TP : {take_profit}')
                             
                         elif signal == 'Sell' and ma_pos == -1:
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')                          
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                             notifier(f'Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            notifier(f'TP : {take_profit}')
+                            
                             #sell order
                             client.futures_create_order(symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='SHORT')
 
@@ -923,6 +898,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                                     priceProtect=True  
                                                     )
                             in_trade_usdt.value=1
+                            notifier(f'TP : {take_profit}')
                             
                         else:
                             notifier(f'Not taking the trade')
@@ -1028,9 +1004,12 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     super_df=supertrend(coin,df, period, atr1,pivot_period)
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
+                    super_df['condition']=0
+                    
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
-                        risk=0.02
-
+                        risk=0.001
+                        super_df.to_csv('super_df.csv',mode='w+',index=False)
+                        df.to_csv('df.csv',index=False)
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
@@ -1038,84 +1017,29 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                         trade_df=trade_df[trade_df['pos_signal']==1]
 
 
-                        last_trend = super_df['in_uptrend'].iloc[-2]
-                        for i in range(-2, -len(super_df)-1, -1):
-                            if str(super_df['in_uptrend'].iloc[i]) != str(last_trend):
-                                if str(last_trend) == 'False' and super_df.iloc[i+1][f'{ma_condition}_pos'] ==  -1:    
-                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                    break
-                                elif str(last_trend) == 'True' and super_df.iloc[i+1][f'{ma_condition}_pos'] == 1:    
-                                    print(super_df.iloc[i][['OpenTime','in_uptrend']])
-                                    break
-                                
-                        trend_open_1=super_df.iloc[i+1]['in_uptrend']  #openprice
-                        time_open_1=super_df.iloc[i+1]['OpenTime'] 
-                        price_open_1 = super_df.iloc[i+1]['close'] 
+                        trend_open_1 = trade_df.iloc[-1]['signal']
+                        price_open_1 = trade_df.iloc[-1]['entry']
+                        price_close_1 = trade_df.iloc[-1]['close_price'] 
+                        lastTradePerc = trade_df.iloc[-1]['percentage'] 
+                        lastTradeOutcome = trade_df.iloc[-1]['trade'] 
+                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime'] 
 
-                        #closeprice
-                        time_close_1 = super_df.iloc[-1]['OpenTime'] 
-                        price_close_1= super_df.iloc[-1]['close'] 
-
-                        print(time_open_1,trend_open_1,price_open_1,time_close_1,price_close_1)
-
-                        if str(trend_open_1) == str(False):
-                            print('Sell')
-                            if price_open_1 > price_close_1:
-                                lastTradeOutcome = 'W'
-                            else:
-                                lastTradeOutcome = 'L'
-                            lastTradePerc = (price_open_1-price_close_1)/price_open_1
-                        else:
-                            print('Buy')
-                            if price_open_1 < price_close_1:
-                                lastTradeOutcome = 'W'
-                            else:
-                                lastTradeOutcome = 'L'
-                            
-                            lastTradePerc = (price_close_1-price_open_1)/price_open_1
-
+                        notifier(f'BUSD : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} lastTradePerc : {lastTradePerc} lastTradeOutcome : {lastTradeOutcome}')
                         
-                        lastTradeOpenTime =time_open_1
-                        lastTradePerc = trade_df.iloc[-1]['percentage']
+                    
+
+                        trend_open_2= trade_df.iloc[-2]['signal']#openprice
+                        time_open_2 = trade_df.iloc[-2]['OpenTime'] 
+                        price_open_2= trade_df.iloc[-2]['entry'] 
+                        lastTradeOpenTime_2= trade_df.iloc[-2]['OpenTime']
+                         
+                        price_close_2= trade_df.iloc[-2]['close_price']
+                        lastTradeOutcome_2 = trade_df.iloc[-2]['trade']
+                        lastTradePerc_2 = trade_df.iloc[-2]['percentage']
                         
-                        notifier(f'BUSD : previous trade opentime : {lastTradeOpenTime} , perc : {lastTradePerc} , trade : {lastTradeOutcome}')
-                        if str(trend_open_1) == str(False):
-                            last_trend_2 = True
-                        else:
-                            last_trend_2 = False
-                            
-                        for j in range(i, -len(super_df)-1, -1):
-                            if str(super_df['in_uptrend'].iloc[j]) != str(last_trend_2):
-                                print(super_df.iloc[j][['OpenTime','in_uptrend']])
-                                break
 
-                        trend_open_2= super_df.iloc[j+1]['in_uptrend']  #openprice
-                        time_open_2 = super_df.iloc[j+1]['OpenTime'] 
-                        price_open_2= super_df.iloc[j+1]['close'] 
+                        notifier(f'BUSD : Previous trade 2 :OpenTime : {lastTradeOpenTime_2} singal :{trend_open_2}, open : {price_open_2} close : {price_close_2} lastTradePerc : {lastTradePerc_2} lastTradeOutcome : {lastTradeOutcome_2}')
 
-                        #closeprice
-                        time_close_2 = super_df.iloc[i+1]['OpenTime'] 
-                        price_close_2= super_df.iloc[i+1]['close'] 
-
-                        if str(trend_open_2) == str(False):
-                            print('Sell')
-                            if price_open_2 > price_close_2:
-                                
-                                lastTradeOutcome_2 = 'W'
-                            else:
-                                lastTradeOutcome_2 = 'L'
-                            lastTradePerc_2 = (price_open_2-price_close_2)/price_open_2 
-                        else:
-                            print('Buy')
-                            if price_open_2 < price_close_2:
-                            
-                                lastTradeOutcome_2 = 'W'
-                            else:
-                                lastTradeOutcome_2= 'L'
-                               
-                            lastTradePerc_2 = (price_close_2-price_open_2)/price_open_2
-
-                        notifier(f'BUSD : previous 2nd trade opentime : {time_open_2} , perc : {lastTradePerc_2} , trade : {lastTradeOutcome_2}')
 
                         if lastTradeOutcome =='W':
                             notifier('BUSD : Last one was a win reducing the risk')
@@ -1127,7 +1051,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                             notifier('BUSD : Last two were wins reducing the risk drastically')
                             risk = risk/3
                         else:
-                            notifier('BUSD : One of last two a was win not reducing the risk drastically')
+                            notifier('BUSD : One of last two a was win or both L so not reducing the risk drastically')
 
 
                         lock.acquire()
@@ -1154,7 +1078,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                        
 
                         
-                        notifier(f'BUSD : Allocated stake:{round(stake,2)}')
+                        notifier(f'BUSD : Allocated stake:{round(stake,2)} Risk : {risk}')
                         
                         signal = ['Buy' if super_df.iloc[-1]['in_uptrend'] == True else 'Sell'][0]
                         entry=super_df.iloc[-1]['close']
