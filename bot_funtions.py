@@ -703,7 +703,40 @@ def notifier(message,tries=0):
             tries+=1
             time.sleep(0.5)
             notifier(message,tries)
-            
+
+
+
+def notifier_with_photo(file_path, caption, tries=0):
+    telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendPhoto'
+    files = {'photo': open(file_path, 'rb')}
+    data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
+    tel_resp = requests.post(telegram_api_url, files=files, data=data)
+    
+    if tel_resp.status_code == 200:
+        pass
+    else:
+        while tries < 25:
+            print(f'Telegram notifier problem retrying {tries}')
+            tries += 1
+            time.sleep(0.5)
+            notifier_with_photo(file_path, caption, tries)
+
+
+def notifier_with_gif(file_path, caption, tries=0):
+    telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendDocument'
+    files = {'document': open(file_path, 'rb')}
+    data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
+    tel_resp = requests.post(telegram_api_url, files=files, data=data)
+    
+    if tel_resp.status_code == 200:
+        pass
+    else:
+        while tries < 25:
+            print(f'Telegram notifier problem retrying {tries}')
+            tries += 1
+            time.sleep(0.5)
+            notifier_with_gif(file_path, caption, tries)
+           
         
 def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
     print(f'timeframe : {timeframe}')
