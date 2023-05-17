@@ -829,7 +829,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         
                         if lastTradeOutcome =='W':
                             notifier('Last one was a win reducing the risk')
-                            risk = initialRisk/2
+                            risk = 0.01
 
 
 
@@ -875,7 +875,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     
                         
                         
-                        rr=17
+                        rr=88
                         
                         if signal == 'Buy' and ma_pos == 1:
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
