@@ -18,6 +18,7 @@ from numba import njit
 import traceback
 import sys
 import pytz
+import random
 
 
 
@@ -968,9 +969,16 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             else:
                                 profit_pos='Red'
 
-
-
                             notifier(f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value},Bal :{bal_pos},PNL:{profit_pos}')                    
+                            
+                            number = random.randint(1, 2)
+
+                            if number == 1:
+                                notifier_with_gif("data/notification1.gif", """Dont interfere if you want money, if you involve you lose one, amydala comes into play and
+      you lose rest.Its better not to let amygdala come into picutre. Wana involve ? may be win three chess games in a streak then see""")
+                            else:
+                                notifier_with_gif("data/notification2.gif", "Let me do the job i am supposed to,you stay put. I might do it slowly but i will get you there")
+
                         weight_reduce+=1
                         indicator+=1
                     
