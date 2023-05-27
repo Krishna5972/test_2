@@ -792,7 +792,6 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                 data = json.loads(result)
                 if data['k']['x']==True:
                     candle=data['k']
-                
                     candle_data=[candle['t'],candle['o'],candle['h'],candle['l'],candle['c'],candle['v']]
                     temp_df = pd.DataFrame([candle_data], columns=['OpenTime','open', 'high', 'low', 'close', 'volume'])
                     df=pd.concat([df,temp_df])
@@ -807,7 +806,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
                         canTrade = not(weekday == 5 or weekday == 6)
                         print(f'USDT : Can Trade? : {canTrade}')
-                        if canTrade:
+                        if not canTrade:
                             try:
                                 close_position(client,coin,'Sell') #close open position if any
                                 in_trade_usdt.value=0
@@ -1094,8 +1093,8 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                         
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
                         canTrade = not(weekday == 5 or weekday == 6)
-                        print(f'Can Trade? : {canTrade}')
-                        if  canTrade:
+                        print(f'BUSD : Can Trade? : {canTrade}')
+                        if  not canTrade:
                             try:
                                 close_position_busd(client,coin,'Sell') #close open position if any
                                 notifier(f'BUSD : Position Closed {timeframe}')
