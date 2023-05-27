@@ -817,7 +817,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                     notifier(f'USDT : Position Closed {timeframe}')
                                     in_trade_usdt.value=0
                                 except Exception as e:
-                                    notifier(f'No Open Position to Close {timeframe}')
+                                    notifier(f'USDT : No Open Position to Close {timeframe}')
 
                             if weekday == 5:
                                 notifier(" USDT:Not taking the trade as it is Saturday")
@@ -847,7 +847,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             previousWeekPercentage = 0
 
                         
-                        notifier(f'Previous week percentage : {previousWeekPercentage}')                     
+                        notifier(f'USDT : Previous week percentage : {previousWeekPercentage}')                     
 
                         trade_df['ema_signal']=trade_df.apply(lambda x: 1 if x['entry'] > x[ma_condition] else -1,axis=1)
                         trade_df['pos_signal']=trade_df.apply(lambda x:1 if x['signal']=='Buy' and x['ema_signal']==1 else (1 if x['signal']=='Sell' and x['ema_signal']==-1 else 0),axis=1)
@@ -868,7 +868,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             risk = 0.03
                         
                         if lastTradeOutcome =='W':
-                            notifier('Last one was a win reducing the risk')
+                            notifier('USDT : Last one was a win reducing the risk')
                             risk = 0.01
 
 
@@ -878,14 +878,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         try:
                             close_position(client,coin,'Sell') #close open position if any
                             in_trade_usdt.value=0
-                            notifier(f'Position Closed {timeframe}')
+                            notifier(f'USDT : Position Closed {timeframe}')
                         except Exception as err:
                             try:
                                 close_position(client,coin,'Buy')
-                                notifier(f'Position Closed {timeframe}')
+                                notifier(f'USDT : Position Closed {timeframe}')
                                 in_trade_usdt.value=0
                             except Exception as e:
-                                notifier(f'No Open Position to Close {timeframe}')
+                                notifier(f'USDT : No Open Position to Close {timeframe}')
                                 
                             print(err)
 
@@ -896,7 +896,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         
                             
                         
-                        notifier(f'Allocated stake:{round(stake,2)}')
+                        notifier(f'USDT : Allocated stake:{round(stake,2)}')
                         
                         signal = ['Buy' if super_df.iloc[-1]['in_uptrend'] == True else 'Sell'][0]
                         entry=super_df.iloc[-1]['close']
@@ -920,7 +920,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
-                            notifier(f'Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
+                            notifier(f'USDT : Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
                             
                             #buy order
                             client.futures_create_order(symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='LONG')
@@ -947,7 +947,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')                          
                             notifier(f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
-                            notifier(f'Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
+                            notifier(f'USDT : Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
                             
                             #sell order
                             client.futures_create_order(symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='SHORT')
@@ -977,7 +977,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     else:
                         # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
                         # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
-                        notifier(f'{timeframe} candle closed : {coin}')
+                        notifier(f'USDT : {timeframe} candle closed : {coin}')
 
 
                         if in_trade_usdt.value==1 and weight_reduce>=1:
