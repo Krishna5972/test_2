@@ -742,6 +742,24 @@ def notifier_with_gif(file_path, caption, tries=0):
 def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
     print(f'timeframe : {timeframe}')
     notifier(f'Starting USDT function,SARAVANA BHAVA' )
+    sayings_and_gifs = [
+    ("data/1.gif", "Bigger the patience, bigger the reward."),
+    ("data/2.gif", "The market is a device for transferring money from the impatient to the patient."),
+    ("data/3.gif", "Trading is a marathon, not a sprint; stamina beats speed in the long run."),
+    ("data/4.gif", "Emotions are a trader's worst enemy. Practice patience, stay disciplined, and keep a level head."),
+    ("data/5.gif", "Profit comes to those who wait. The market will always present new opportunities."),
+    ("data/6.gif", "Success in the market is not about brilliance, but resilience. Stay patient, stay focused."),
+    ("data/7.gif", "In trading, money is made in waiting, not in the transaction."),
+    ("data/8.gif", "Bulls make money, bears make money, pigs get slaughtered never let greed take over your trading."),
+    ("data/9.gif", "Those who rush to riches will be met with poverty at the finish line."),
+    ("data/10.gif", "Beware of jumping into trades for quick money, the pursuit of easy gains can lead to heavy losses."),
+    ("data/11.gif", "In the face of uncertainty, choose patience over greed. It's better to be safe than sorry."),
+    ("data/12.gif", "In trading, patience is the virtue that separates the successful from the impulsive."),
+    ("data/13.gif", "The patient trader understands that success is not about making trades every day but about making the right trades when the opportunity arises."),
+    ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach."),
+    ("data/15.gif", "In the pursuit of financial success, patience is not just a virtue, but a strategy. The market rewards those who can wait."),
+    ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare.")
+]
     restart=0
     while(True):
         if restart==1:
@@ -752,7 +770,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             ws.connect(f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started USDT function : {timeframe}')
             ws.settimeout(15)
-            risk=0.02
+            risk=0.002
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
             #df.drop(['OpenTime'],axis=1,inplace=True)
@@ -786,7 +804,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']            
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
-                        risk=0.02
+                        weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
+                        if  weekday == 5 or weekday == 6:
+                            if weekday == 5:
+                                notifier(" USDT:Not taking the trade as it is Saturday")
+                            else:
+                                notifier("USDT:Not taking the trade as it is Sunday")                       
+                            continue
+                        risk=0.002
                         initialRisk = risk
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
@@ -826,11 +851,11 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         
                         if previousWeekPercentage < 0:
-                            risk = 0.03
+                            risk = 0.003
                         
                         if lastTradeOutcome =='W':
                             notifier('Last one was a win reducing the risk')
-                            risk = 0.01
+                            risk = 0.001
 
 
 
@@ -852,7 +877,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
                         acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
-                        
+                        acc_balance = 15
                         stake=(acc_balance*0.88)
                         
                         
@@ -971,13 +996,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                             notifier(f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value},Bal :{bal_pos},PNL:{profit_pos}')                    
                             
-                            number = random.randint(1, 2)
-
-                            if number == 1:
-                                notifier_with_gif("data/notification1.gif", """Dont interfere if you want money, if you involve you lose one, amydala comes into play and
-      you lose rest.Its better not to let amygdala come into picutre. Wana involve ? may be win three chess games in a streak then see""")
-                            else:
-                                notifier_with_gif("data/notification2.gif", "Let me do the job i am supposed to,you stay put. I might do it slowly but i will get you there")
+                            makeSense(sayings_and_gifs)
+                            
 
                         weight_reduce+=1
                         indicator+=1
@@ -995,7 +1015,14 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             time.sleep(10)
 
 
-            
+def makeSense(sayings_and_gifs):
+    # Randomly select a gif and saying
+    gif, saying = random.choice(sayings_and_gifs)
+
+    # Use the selected gif and saying
+    notifier_with_gif(gif, saying)
+
+    
             
 def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,client,coin,sleep_time,in_trade_usdt,in_trade_busd,lock):
     notifier(f'Starting BUSD function,SARAVANA BHAVA')
@@ -1044,9 +1071,23 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
                     super_df['condition']=0
+                    notifier('BUSD : ',super_df.iloc[-1]['OpenTime'])
+                    print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
+                    print(f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
+
                     
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
-                        risk=0.02
+                        
+                        weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
+                        notifier(f'BUSD : Weekday : {weekday}')
+                        if  weekday == 5 or weekday == 6:
+                            if weekday == 5:
+                                notifier("BUSD : Not taking the trade as it is Saturday")
+                            else:
+                                notifier("BUSD : Not taking the trade as it is Sunday") 
+                                                  
+                            continue
+                        risk=0.002
                         #super_df.to_csv('super_df.csv',mode='w+',index=False)
                        #df.to_csv('df.csv',index=False)
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
@@ -1111,6 +1152,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                         # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
                         acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
                         
+                        acc_balance = 15
                         
                         
                         stake=(acc_balance*0.88)
