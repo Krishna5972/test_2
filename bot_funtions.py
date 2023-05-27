@@ -756,7 +756,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
     ("data/11.gif", "In the face of uncertainty, choose patience over greed. It's better to be safe than sorry."),
     ("data/12.gif", "In trading, patience is the virtue that separates the successful from the impulsive."),
     ("data/13.gif", "The patient trader understands that success is not about making trades every day but about making the right trades when the opportunity arises."),
-    ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach."),
+    ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach.Lets the bot work 010101...."),
     ("data/15.gif", "In the pursuit of financial success, patience is not just a virtue, but a strategy. The market rewards those who can wait."),
     ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare.")
 ]
@@ -805,12 +805,27 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']            
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
-                        if  weekday == 5 or weekday == 6:
+                        canTrade = not(weekday == 5 or weekday == 6)
+                        print(f'USDT : Can Trade? : {canTrade}')
+                        if  not canTrade:
+                            try:
+                                close_position(client,coin,'Sell') #close open position if any
+                                in_trade_usdt.value=0
+                                notifier(f'USDT : Position Closed {timeframe}')
+                            except Exception as err:
+                                try:
+                                    close_position(client,coin,'Buy')
+                                    notifier(f'USDT : Position Closed {timeframe}')
+                                    in_trade_usdt.value=0
+                                except Exception as e:
+                                    notifier(f'No Open Position to Close {timeframe}')
+
                             if weekday == 5:
                                 notifier(" USDT:Not taking the trade as it is Saturday")
                             else:
                                 notifier("USDT:Not taking the trade as it is Sunday")                       
                             continue
+
                         risk=0.002
                         initialRisk = risk
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
@@ -1079,8 +1094,21 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
                         
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
-                        notifier(f'BUSD : Weekday : {weekday}')
-                        if  weekday == 5 or weekday == 6:
+                        canTrade = not(weekday == 5 or weekday == 6)
+                        print(f'Can Trade? : {canTrade}')
+                        if  canTrade:
+                            try:
+                                close_position_busd(client,coin,'Sell') #close open position if any
+                                notifier(f'BUSD : Position Closed {timeframe}')
+                                in_trade_busd.value=0   
+                            except Exception as err:
+                                try:
+                                    close_position_busd(client,coin,'Buy')
+                                    notifier(f'BUSD : Position Closed {timeframe}')
+                                    in_trade_busd.value=0
+                                except Exception as e: 
+                                    notifier(f'BUSD : No Position to close {timeframe}')
+
                             if weekday == 5:
                                 notifier("BUSD : Not taking the trade as it is Saturday")
                             else:
