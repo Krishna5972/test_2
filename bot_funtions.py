@@ -1084,7 +1084,6 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']
                     super_df['condition']=0
-                    notifier('BUSD : ',super_df.iloc[-1]['OpenTime'])
                     print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
                     print(f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
 
