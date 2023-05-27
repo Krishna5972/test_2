@@ -770,7 +770,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
             ws.connect(f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started USDT function : {timeframe}')
             ws.settimeout(15)
-            risk=0.002
+            risk=0.02
             bars = exchange.fetch_ohlcv(f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(bars[:-1], columns=['OpenTime', 'open', 'high', 'low', 'close', 'volume'])
             #df.drop(['OpenTime'],axis=1,inplace=True)
@@ -807,7 +807,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
                         canTrade = not(weekday == 5 or weekday == 6)
                         print(f'USDT : Can Trade? : {canTrade}')
-                        if  not canTrade:
+                        if canTrade:
                             try:
                                 close_position(client,coin,'Sell') #close open position if any
                                 in_trade_usdt.value=0
@@ -826,7 +826,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                 notifier("USDT:Not taking the trade as it is Sunday")                       
                             continue
 
-                        risk=0.002
+                        risk=0.02
                         initialRisk = risk
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
@@ -866,11 +866,11 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         
                         if previousWeekPercentage < 0:
-                            risk = 0.003
+                            risk = 0.03
                         
                         if lastTradeOutcome =='W':
                             notifier('Last one was a win reducing the risk')
-                            risk = 0.001
+                            risk = 0.01
 
 
 
@@ -892,7 +892,6 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
                         # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
                         acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
-                        acc_balance = 15
                         stake=(acc_balance*0.88)
                         
                         
@@ -1115,7 +1114,8 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                                 notifier("BUSD : Not taking the trade as it is Sunday") 
                                                   
                             continue
-                        risk=0.002
+                        initial_risk=0.02
+                        risk = initial_risk
                         #super_df.to_csv('super_df.csv',mode='w+',index=False)
                        #df.to_csv('df.csv',index=False)
                         trade_df=create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
@@ -1151,13 +1151,13 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
 
                         if lastTradeOutcome =='W':
                             notifier('BUSD : Last one was a win reducing the risk')
-                            risk = risk/2
+                            risk = initial_risk/2
                         else:
                             notifier('BUSD : Last one was a Loss not reducing the risk')
 
                         if lastTradeOutcome =='W' and lastTradeOutcome_2 =='W':
                             notifier('BUSD : Last two were wins reducing the risk drastically')
-                            risk = risk/3
+                            risk = initial_risk/3
                         else:
                             notifier('BUSD : One of last two a was win or both L so not reducing the risk drastically')
 
@@ -1179,9 +1179,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             
                         # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
                         acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
-                        
-                        acc_balance = 15
-                        
+                                                
                         
                         stake=(acc_balance*0.88)
                        

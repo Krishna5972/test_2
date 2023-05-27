@@ -38,12 +38,19 @@ timeframes_dict={
 
 
 coin='ETH'
-timeframe_usdt='1m' 
-period_usdt=3
+timeframe_usdt='30m' 
+period_usdt=12
 atr1_usdt=1
-pivot_period_usdt=2
-ma_condition_usdt='ema_5'
+pivot_period_usdt=10
+ma_condition_usdt='ema_100'
 time_usdt=timeframes_dict[timeframe_usdt]
+
+timeframe_busd='30m'  
+period_busd=12
+atr1_busd=1
+pivot_period_busd=10
+ma_condition_busd='ema_100'
+time_busd=timeframes_dict[timeframe_busd]
 
 while(True):
     try:
@@ -56,14 +63,6 @@ while(True):
     except Exception as e:
         notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
         time.sleep(300)
-
-
-timeframe_busd='1m'  
-period_busd=2
-atr1_busd=1
-pivot_period_busd=3
-ma_condition_busd='ema_5'
-time_busd=timeframes_dict[timeframe_busd]
 
 
 in_trade_usdt=multiprocessing.Value('i',0)
