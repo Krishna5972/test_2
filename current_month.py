@@ -35,6 +35,8 @@ df_fin['day']=df_fin[['date','month']].apply(lambda x: datetime(datetime.now().y
 
 df_fin.sort_values(by=['day'],inplace=True)
 
+
+
 df_fin.to_csv('current_month.csv',index=False,mode='w+')
 
 send_mail('current_month.csv')

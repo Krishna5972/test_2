@@ -19,6 +19,7 @@ import traceback
 import sys
 import pytz
 import random
+import pickle
 
 
 
@@ -803,6 +804,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     super_df[f'{ma_condition}_pos']=super_df[[ma_condition,'close']].apply(ema_pos,col_name=ma_condition,axis=1)
                     ma_pos=super_df.iloc[-1][f'{ma_condition}_pos']            
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']: 
+                        acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
                         weekday = pd.to_datetime(super_df.iloc[-1]['OpenTime']).weekday()
                         canTrade = not(weekday == 5 or weekday == 6)
                         print(f'USDT : Can Trade? : {canTrade}')
@@ -818,6 +820,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                     in_trade_usdt.value=0
                                 except Exception as e:
                                     notifier(f'USDT : No Open Position to Close {timeframe}')
+                            week_over_week(client,coin,acc_balance)
+                            notifier(" USDT: Weekly Report is generated and sent via mail")
 
                             if weekday == 5:
                                 notifier(" USDT:Not taking the trade as it is Saturday")
@@ -890,7 +894,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             print(err)
 
                         # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
-                        acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
+                        
                         stake=(acc_balance*0.88)
                         
                         
@@ -990,12 +994,12 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                 lock.release()
                         
                         
-                        if indicator>1:
+                        if indicator>3:
                             indicator=0   #notification every 60 minutes
                             information=client.futures_account()
                             totalUnrealizedProfit=round(float(information['totalUnrealizedProfit']),2)
                             bal=round(float(information['totalCrossWalletBalance']),2)
-                            if bal > 50: #Month initial
+                            if bal > 320 : #Month initial
                                 bal_pos='Profit'
                             else:
                                 bal_pos='Loss'
@@ -1236,7 +1240,92 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             time.sleep(10)
             restart=1
 
+def combine_dicts(dict1, dict2):
+    new_dict = {}
+    for key, value in dict1.items():
+        new_dict[key] = value
+    for key, value in dict2.items():
+        if key not in new_dict:
+            new_dict[key] = value
+    return new_dict
 
+def week_over_week(client,coin,acc_balance):
+    try:
+        week_over_week_df = pd.read_csv('week_over_week_df.csv')
+    except Exception as e:
+        week_over_week_df = pd.DataFrame(columns=['date', 'month', 'income', 'day', 'weekday', 'balance'])
+
+    end_date=datetime.now()
+    star_date=datetime.now()-timedelta(days=90)
+
+    end_date=time.mktime(end_date.timetuple())
+    star_date=time.mktime(star_date.timetuple())
+    end_date=int(end_date)*1000
+    star_date=int(star_date)*1000
+
+    data=client.futures_income_history(symbol=f'{coin}USDT',startTime=star_date,endTime=end_date,limit=1000)
+    data_BUSD=client.futures_income_history(symbol=f'{coin}BUSD',startTime=star_date,endTime=end_date,limit=1000)
+
+    data.extend(data_BUSD)
+
+    df=pd.DataFrame(data)
+    df['time']=df['time'].apply(lambda x:datetime.fromtimestamp(x/1000))
+    df['time']=pd.to_datetime(df['time'])
+    df['month']=df['time'].dt.month
+    df['date']=df['time'].dt.day
+    df['income']=df['income'].astype('float')
+
+
+    df_fin=df.groupby(['date','month']).agg({'income':'sum'}).reset_index()
+    df_fin['day']=df_fin[['date','month']].apply(lambda x: datetime(datetime.now().year,x['month'], x['date'], 0, 0, 0, 0) ,axis=1)
+    df_fin.sort_values(by=['day'],inplace=True)
+
+    df_fin['day'] = pd.to_datetime(df_fin['day'])
+    df_weekly = df_fin.resample('W', on='day').agg({'income': 'sum'}).reset_index()
+
+    current_week_dict = {
+    df_weekly['day'].iloc[-1] : acc_balance
+}
+    
+    with open('data/week_over_week_dict.pkl', 'rb') as file:
+        week_over_week_dict = pickle.load(file)
+
+    week_over_week_dict = combine_dicts(week_over_week_dict,current_week_dict)
+
+    with open('data/week_over_week_dict.pkl', 'wb') as file:
+        pickle.dump(week_over_week_dict, file)
+
+    for index, row in df_weekly.iterrows():
+        day = row['day']
+        
+        # Check if the day matches with the keys in current_week_dict
+        if day in current_week_dict:
+            # Assign the value from current_week_dict to the 'balance' column
+            df_weekly.loc[index, 'balance'] = current_week_dict[day]
+        else:
+            # Assign 88 to the 'balance' column if no match is found
+            df_weekly.loc[index, 'balance'] = 50
+
+    week_over_week_df = pd.concat([week_over_week_df,df_weekly],axis=0)
+
+    week_over_week_df['day'] = pd.to_datetime(week_over_week_df['day'])
+
+    week_over_week_df['day_duplicates'] = week_over_week_df['day'].dt.date
+
+    week_over_week_df.drop_duplicates(subset='day_duplicates', keep='first', inplace=True)
+
+    week_over_week_df.to_csv('week_over_week_df.csv',index=False,mode='w+')
+
+    week_over_week_df = week_over_week_df[week_over_week_df['income']!=0]
+
+    week_over_week_df['change'] = round((week_over_week_df['income']/week_over_week_df['balance'])*100,2)
+
+    
+
+    week_over_week_df[['day','change']].to_csv('change.csv',index=False,mode='w+')
+
+    send_mail('change.csv')
+    
 def send_mail(filename,subject='SARAVANA BHAVA'):
     from_= 'gannamanenilakshmi1978@gmail.com'
     to= 'vamsikrishnagannamaneni@gmail.com'
