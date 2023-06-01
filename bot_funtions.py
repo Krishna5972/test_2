@@ -877,7 +877,6 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
 
 
 
-                        lock.acquire()
                         
                         try:
                             close_position(client,coin,'Sell') #close open position if any
@@ -918,7 +917,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     
                         
                         
-                        rr=88
+                        rr=50
                         
                         if signal == 'Buy' and ma_pos == 1:
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
@@ -930,6 +929,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             client.futures_create_order(symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='LONG')
 
                             take_profit=entry+((entry-sl)*rr)
+                            notifier(f'USDT : TP : {round(take_profit,round_price)}')
                             client.futures_create_order(
                                     symbol=f'{coin}USDT',
                                     price=round(take_profit,round_price),
@@ -945,7 +945,6 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                     priceProtect=True  
                                     )
                             in_trade_usdt.value=1
-                            notifier(f'TP : {take_profit}')
                             
                         elif signal == 'Sell' and ma_pos == -1:
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')                          
@@ -957,6 +956,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             client.futures_create_order(symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity,dualSidePosition=True,positionSide='SHORT')
 
                             take_profit=entry-((sl-entry)*rr)
+                            notifier(f'USDT : TP : {round(take_profit,round_price)}')
                             client.futures_create_order(
                                                     symbol=f'{coin}USDT',
                                                     price=round(take_profit,round_price),
@@ -972,11 +972,9 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                                                     priceProtect=True  
                                                     )
                             in_trade_usdt.value=1
-                            notifier(f'TP : {take_profit}')
-                            
+      
                         else:
                             notifier(f'Not taking the trade')
-                        lock.release()
                         
                     else:
                         # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
@@ -1164,7 +1162,7 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                             notifier('BUSD : One of last two a was win or both L so not reducing the risk drastically')
 
 
-                        lock.acquire()
+                        
                         
                         try:
                             close_position_busd(client,coin,'Sell') #close open position if any
@@ -1224,8 +1222,6 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                             notifier(f'BUSD : Risk adjusted stake:{round(stake,3)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                         else:
                             notifier(f'BUSD : Not taking the trade')
-
-                        lock.release()
                     else:
                         notifier(f'BUSD : {timeframe} candle closed : {coin}')
         except Exception as e:
