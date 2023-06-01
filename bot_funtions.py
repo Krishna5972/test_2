@@ -917,7 +917,7 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                     
                         
                         
-                        rr=50
+                        rr=88
                         
                         if signal == 'Buy' and ma_pos == 1:
                             notifier(f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
@@ -986,10 +986,8 @@ def condition_usdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,clie
                             weight_reduce=0
                             open_orders=client.futures_get_open_orders(symbol=f'{coin}USDT')
                             if len(open_orders)==0:
-                                lock.acquire()
                                 in_trade_usdt.value=0
                                 notifier('USDT Pos closed in profit')
-                                lock.release()
                         
                         
                         if indicator>3:
