@@ -1222,6 +1222,37 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
                             notifier(f'BUSD : Not taking the trade')
                     else:
                         notifier(f'BUSD : {timeframe} candle closed : {coin}')
+
+                    try:
+                        now = datetime.utcnow()
+                        if now.hour == 23 and now.minute < 29:
+                            acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']),2)
+
+                            current_day_dict = {
+        now.strftime('%d-%m-%Y') : acc_balance
+    }
+                            try:
+                                with open('data/day_over_day_dict.pkl', 'rb') as file:
+                                    day_over_day_dict = pickle.load(file)
+                            except Exception as e:
+                                day_over_day_dict = {}
+                                with open('data/day_over_day_dict.pkl', 'wb') as file:
+                                    pickle.dump(day_over_day_dict, file)
+
+
+                            day_over_day_dict = combine_dicts(day_over_day_dict,current_day_dict)
+
+                            with open('data/day_over_day_dict.pkl', 'wb') as file:
+                                pickle.dump(day_over_day_dict, file)
+
+                            notifier(f'Daily price captured')
+                        
+                    except Exception as e:
+                        notifier('Error while capturing the price')
+
+
+
+
         except Exception as e:
             notifier(e)
             notifier(f'BUSD : Restarting BUSD function : {coin}')
@@ -1235,13 +1266,24 @@ def condition_busdt(timeframe,pivot_period,atr1,period,ma_condition,exchange,cli
             restart=1
 
 def combine_dicts(dict1, dict2):
-    new_dict = {}
-    for key, value in dict1.items():
-        new_dict[key] = value
-    for key, value in dict2.items():
-        if key not in new_dict:
-            new_dict[key] = value
-    return new_dict
+    dict1.update(dict2)
+    return dict1
+
+def day_over_day():
+    with open('data/day_over_day_dict.pkl', 'rb') as file:
+         day_over_day_dict = pickle.load(file)
+
+
+    day_over_day_df = pd.DataFrame(list(day_over_day_dict.items()), columns=["Date", "Balance"])
+
+    day_over_day_df.to_csv('day.csv',index=False,mode='w+')
+
+    send_mail('day.csv')
+
+
+
+
+
 
 def week_over_week(client,coin,acc_balance):
     try:
