@@ -973,6 +973,8 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             take_profit = entry-((sl-entry)*rr)
                             notifier(
                                 f'USDT : TP : {round(take_profit,round_price)}')
+                            if take_profit < 0:
+                                take_profit = entry/2
                             client.futures_create_order(
                                 symbol=f'{coin}USDT',
                                 price=round(take_profit, round_price),
@@ -1005,7 +1007,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                 in_trade_usdt.value = 0
                                 notifier('USDT Pos closed in profit')
 
-                        if indicator > 3:
+                        if indicator > 5:
                             indicator = 0  # notification every 60 minutes
                             information = client.futures_account()
                             totalUnrealizedProfit = round(

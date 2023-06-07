@@ -94,6 +94,9 @@ if float(pos[0]['positionAmt']) !=0 or float(pos[1]['positionAmt']) !=0 or float
 notifier_with_photo("data/vadivela-karthikeya.jpg", "SARAVANA BHAVA")
 notifier_with_gif("data/engine.gif", "REVVING UP")
 
+notifier(f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value}')
+
+
 p1=multiprocessing.Process(target=condition_usdt,args=[timeframe_usdt,
                                                      pivot_period_usdt,
                                                      atr1_usdt,
