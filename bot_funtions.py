@@ -1323,7 +1323,6 @@ def day_over_day():
     day_over_day_df.to_csv('day_over_day_df.csv', mode='w+', index=False)
 
     plot_day_over_day(day_over_day_df)
-
     send_mail("daily_change.png")
 
 
@@ -1332,7 +1331,7 @@ def plot_day_over_day(df):
     df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y')
     
     
-    fig, ax = plt.subplots(figsize=(20, 10), dpi=80)
+    fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
     
     df['DateLabel'] = df['Date'].dt.strftime('%d-%m')
     
@@ -1357,7 +1356,7 @@ def plot_day_over_day(df):
                 label_position = yval - 0.01
             ax.text(bar.get_x() + bar.get_width()/2., label_position,
                     f"{yval:.2f}%\n{date.strftime('%d-%m')}", ha='center', va='bottom', rotation=0, fontsize=10, weight='bold')
-            print(date.strftime('%d-%m'))
+            
     plt.title("Percentage Change", fontsize=16, weight='bold')
     plt.ylabel("Percentage Change (%)", fontsize=14, weight='bold')
     plt.xlabel("Date", fontsize=14, weight='bold')
@@ -1365,7 +1364,7 @@ def plot_day_over_day(df):
     # Find the most common month
     most_common_month = df['Date'].dt.strftime('%B %Y').mode()[0]
 
-    print(most_common_month)
+    
 
     # Display the most common month on the plot
     plt.text(0.99, 0.85, most_common_month, transform=ax.transAxes,
