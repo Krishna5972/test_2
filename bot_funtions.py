@@ -1320,23 +1320,29 @@ def day_over_day():
 
     day_over_day_df.dropna(inplace=True)
 
-    plot_day_over_day(day_over_day_df)
-
     day_over_day_df.to_csv('day_over_day_df.csv', mode='w+', index=False)
+
+    plot_day_over_day(day_over_day_df)
 
     send_mail("daily_change.png")
 
 
 def plot_day_over_day(df):
-    df['Date'] = pd.to_datetime(df['Date'])
-    fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
 
+    df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y')
+    
+    
+    fig, ax = plt.subplots(figsize=(20, 10), dpi=80)
+    
+    df['DateLabel'] = df['Date'].dt.strftime('%d-%m')
+    
+    
     # Use a bar plot and use color to differentiate positive and negative values
-    bars = ax.bar(df['Date'], df['Percentage Change'], color=[
+    bars = ax.bar(df['DateLabel'] , df['Percentage Change'], color=[
                   'g' if x >= 0 else 'r' for x in df['Percentage Change']])
-
+    
     # Rotate x-axis labels for better visibility
-    plt.xticks(rotation=90, fontsize=12, weight='bold', color='black')
+    plt.xticks(df['DateLabel'],rotation=90, fontsize=12, weight='bold', color='black')
 
     # Set y-ticks properties
     ax.tick_params(axis='y', colors='black', labelsize=12)
@@ -1351,7 +1357,7 @@ def plot_day_over_day(df):
                 label_position = yval - 0.01
             ax.text(bar.get_x() + bar.get_width()/2., label_position,
                     f"{yval:.2f}%\n{date.strftime('%d-%m')}", ha='center', va='bottom', rotation=0, fontsize=10, weight='bold')
-
+            print(date.strftime('%d-%m'))
     plt.title("Percentage Change", fontsize=16, weight='bold')
     plt.ylabel("Percentage Change (%)", fontsize=14, weight='bold')
     plt.xlabel("Date", fontsize=14, weight='bold')
