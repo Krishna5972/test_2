@@ -1328,15 +1328,18 @@ def day_over_day():
 
 
 def plot_day_over_day(df):
-    df['Date'] = pd.to_datetime(df['Date'])
+    print(df)
+    df['Date'] = pd.to_datetime(df['Date'],format='%Y-%d-%m')
     fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
 
+ 
+    df['DateLabel'] = df['Date'].dt.strftime('%d-%m')
     # Use a bar plot and use color to differentiate positive and negative values
-    bars = ax.bar(df['Date'], df['Percentage Change'], color=[
+    bars = ax.bar(df['DateLabel'] , df['Percentage Change'], color=[
                   'g' if x >= 0 else 'r' for x in df['Percentage Change']])
 
     # Rotate x-axis labels for better visibility
-    plt.xticks(rotation=90, fontsize=12, weight='bold', color='black')
+    plt.xticks(df['DateLabel'],rotation=90, fontsize=12, weight='bold', color='black')
 
     # Set y-ticks properties
     ax.tick_params(axis='y', colors='black', labelsize=12)
