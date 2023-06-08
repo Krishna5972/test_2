@@ -1322,6 +1322,8 @@ def day_over_day():
 
     plot_day_over_day(day_over_day_df)
 
+    day_over_day_df.to_csv('day_over_day_df.csv', mode='w+', index=False)
+
     send_mail("daily_change.png")
 
 
