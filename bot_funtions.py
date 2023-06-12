@@ -748,6 +748,10 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first.")
     ]
     restart = 0
+    risk = 0.02
+    neutral_risk = risk
+    lower_risk = 0.01  # initial_risk/2
+    higher_risk = risk * 1.5
     while (True):
         if restart == 1:
             notifier('USDT Restarted succesfully')
@@ -758,7 +762,6 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started USDT function : {timeframe}')
             ws.settimeout(15)
-            risk = 0.02
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(
@@ -830,7 +833,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             continue
 
                         risk = 0.02
-                        initialRisk = risk
+
                         trade_df = create_signal_df(
                             super_df, df, coin, timeframe, atr1, period, 100, 100)
 
@@ -860,7 +863,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             previousWeekPercentage = 0
 
                         notifier(
-                            f'USDT : Previous week percentage : {previousWeekPercentage}')
+                            f'USDT : Previous week percentage : {round(previousWeekPercentage,2)}')
 
                         trade_df['ema_signal'] = trade_df.apply(
                             lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
@@ -878,13 +881,33 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         notifier(
                             f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} lastTradePerc : {lastTradePerc} lastTradeOutcome : {lastTradeOutcome}')
 
-                        if previousWeekPercentage < 0:
-                            risk = 0.03
+                        lower_risk, neutral_risk, higher_risk
 
-                        if lastTradeOutcome == 'W':
+                        if previousWeekPercentage <= -0.03:
                             notifier(
-                                'USDT : Last one was a win reducing the risk')
-                            risk = 0.01
+                                f'Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
+                            risk = higher_risk
+                            if lastTradePerc > 0:
+                                notifier(
+                                    f'Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                risk = lower_risk
+
+                        elif previousWeekPercentage >= 0.05:
+                            notifier(
+                                f'Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
+                            risk = lower_risk
+                            if lastTradePerc > 0:
+                                notifier(
+                                    f'Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
+                                risk = lower_risk/2
+
+                        else:
+                            notifier(
+                                f'Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
+                            risk = neutral_risk
+                            if lastTradePerc > 0:
+                                notifier(
+                                    f'Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
 
                         try:
                             # close open position if any
@@ -1071,7 +1094,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             ws.settimeout(15)
             notifier(f'Started BUSD function : {timeframe}')
-            risk = 0.02
+            risk = 0.01
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(
@@ -1144,7 +1167,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                                     "BUSD : Not taking the trade as it is Sunday")
 
                             continue
-                        initial_risk = 0.02
+                        initial_risk = 0.01
                         risk = initial_risk
                         # super_df.to_csv('super_df.csv',mode='w+',index=False)
                        # df.to_csv('df.csv',index=False)
