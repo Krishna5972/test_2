@@ -745,6 +745,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach.Lets the bot work 010101...."),
         ("data/15.gif", "In the pursuit of financial success, patience is not just a virtue, but a strategy. The market rewards those who can wait."),
         ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare.")
+        ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first.")
     ]
     restart = 0
     while (True):
@@ -1329,19 +1330,18 @@ def day_over_day():
 def plot_day_over_day(df):
 
     df['Date'] = pd.to_datetime(df['Date'], format='%d-%m-%Y')
-    
-    
+
     fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
-    
+
     df['DateLabel'] = df['Date'].dt.strftime('%d-%m')
-    
-    
+
     # Use a bar plot and use color to differentiate positive and negative values
-    bars = ax.bar(df['DateLabel'] , df['Percentage Change'], color=[
+    bars = ax.bar(df['DateLabel'], df['Percentage Change'], color=[
                   'g' if x >= 0 else 'r' for x in df['Percentage Change']])
-    
+
     # Rotate x-axis labels for better visibility
-    plt.xticks(df['DateLabel'],rotation=90, fontsize=12, weight='bold', color='black')
+    plt.xticks(df['DateLabel'], rotation=90,
+               fontsize=12, weight='bold', color='black')
 
     # Set y-ticks properties
     ax.tick_params(axis='y', colors='black', labelsize=12)
@@ -1356,15 +1356,13 @@ def plot_day_over_day(df):
                 label_position = yval - 0.01
             ax.text(bar.get_x() + bar.get_width()/2., label_position,
                     f"{yval:.2f}%\n{date.strftime('%d-%m')}", ha='center', va='bottom', rotation=0, fontsize=10, weight='bold')
-            
+
     plt.title("Percentage Change", fontsize=16, weight='bold')
     plt.ylabel("Percentage Change (%)", fontsize=14, weight='bold')
     plt.xlabel("Date", fontsize=14, weight='bold')
 
     # Find the most common month
     most_common_month = df['Date'].dt.strftime('%B %Y').mode()[0]
-
-    
 
     # Display the most common month on the plot
     plt.text(0.99, 0.85, most_common_month, transform=ax.transAxes,
