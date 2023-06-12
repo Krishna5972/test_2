@@ -744,7 +744,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/13.gif", "The patient trader understands that success is not about making trades every day but about making the right trades when the opportunity arises."),
         ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach.Lets the bot work 010101...."),
         ("data/15.gif", "In the pursuit of financial success, patience is not just a virtue, but a strategy. The market rewards those who can wait."),
-        ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare.")
+        ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare."),
         ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first.")
     ]
     restart = 0
