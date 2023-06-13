@@ -832,8 +832,6 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                     "USDT:Not taking the trade as it is Sunday")
                             continue
 
-                        risk = 0.02
-
                         trade_df = create_signal_df(
                             super_df, df, coin, timeframe, atr1, period, 100, 100)
 
@@ -842,6 +840,10 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
                             1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
                         trade_df = trade_df[trade_df['pos_signal'] == 1]
+
+                        trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
+                        trade_df = trade_df[(trade_df['weekday'] != 5) & (
+                            trade_df['weekday'] != 6)]
 
                         # Add 'Year' and 'Week' columns to the DataFrame
                         trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar(
@@ -860,6 +862,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             previousWeekPercentage = df_weekly[(df_weekly['Week'] == (
                                 current_week-1)) & (df_weekly['Year'] == current_year)]['percentage'].values[0]
                         except Exception as week:
+                            notifier(week)
                             previousWeekPercentage = 0
 
                         notifier(
