@@ -888,20 +888,20 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
 
                         if previousWeekPercentage <= -0.03:
                             notifier(
-                                f'Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
+                                f'USDT : Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
                             risk = higher_risk
                             if lastTradePerc > 0:
                                 notifier(
-                                    f'Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                    f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
                                 risk = lower_risk
 
                         elif previousWeekPercentage >= 0.05:
                             notifier(
-                                f'Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
+                                f'USDT : Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
                             risk = lower_risk
                             if lastTradePerc > 0:
                                 notifier(
-                                    f'Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
+                                    f'USDT : Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
                                 risk = lower_risk/2
 
                         else:
@@ -910,7 +910,8 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             risk = neutral_risk
                             if lastTradePerc > 0:
                                 notifier(
-                                    f'Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                    f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                risk = lower_risk/2
 
                         try:
                             # close open position if any
