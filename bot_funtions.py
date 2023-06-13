@@ -866,7 +866,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             previousWeekPercentage = 0
 
                         notifier(
-                            f'USDT : Previous week percentage : {round(previousWeekPercentage,2)}')
+                            f'USDT : Previous week percentage : {round(previousWeekPercentage,3)}')
 
                         trade_df['ema_signal'] = trade_df.apply(
                             lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
@@ -882,7 +882,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
 
                         notifier(
-                            f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} lastTradePerc : {lastTradePerc} lastTradeOutcome : {lastTradeOutcome}')
+                            f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} Previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
 
                         lower_risk, neutral_risk, higher_risk
 
@@ -906,7 +906,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
 
                         else:
                             notifier(
-                                f'Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
+                                f'USDT : Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
                             risk = neutral_risk
                             if lastTradePerc > 0:
                                 notifier(
@@ -1182,7 +1182,9 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                         trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
                             1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
                         trade_df = trade_df[trade_df['pos_signal'] == 1]
-
+                        trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
+                        trade_df = trade_df[(trade_df['weekday'] != 5) & (
+                            trade_df['weekday'] != 6)]
                         trend_open_1 = trade_df.iloc[-1]['signal']
                         price_open_1 = trade_df.iloc[-1]['entry']
                         price_close_1 = trade_df.iloc[-1]['close_price']
@@ -1191,7 +1193,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
 
                         notifier(
-                            f'BUSD : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} lastTradePerc : {lastTradePerc} lastTradeOutcome : {lastTradeOutcome}')
+                            f'BUSD : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
 
                         trend_open_2 = trade_df.iloc[-2]['signal']  # openprice
                         time_open_2 = trade_df.iloc[-2]['OpenTime']
@@ -1203,7 +1205,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                         lastTradePerc_2 = trade_df.iloc[-2]['percentage']
 
                         notifier(
-                            f'BUSD : Previous trade 2 :OpenTime : {lastTradeOpenTime_2} singal :{trend_open_2}, open : {price_open_2} close : {price_close_2} lastTradePerc : {lastTradePerc_2} lastTradeOutcome : {lastTradeOutcome_2}')
+                            f'BUSD : Previous trade 2 :OpenTime : {lastTradeOpenTime_2} singal :{trend_open_2}, open : {price_open_2} close : {price_close_2} previous_trade_returns : {round(lastTradePerc_2,2)} lastTradeOutcome : {lastTradeOutcome_2}')
 
                         if lastTradeOutcome == 'W':
                             notifier(
