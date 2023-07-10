@@ -752,6 +752,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
     neutral_risk = risk
     lower_risk = 0.01  # initial_risk/2
     higher_risk = risk * 1.5
+    previous_trade_win_divide = 3
     while (True):
         if restart == 1:
             notifier('USDT Restarted succesfully')
@@ -859,8 +860,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         current_year = pd.to_datetime(
                             datetime.now()).isocalendar()[0]
                         try:
-                            previousWeekPercentage = df_weekly[(df_weekly['Week'] == (
-                                current_week-1)) & (df_weekly['Year'] == current_year)]['percentage'].values[0]
+                            previousWeekPercentage = df_weekly[(df_weekly['Week'] == (current_week-1)) & (df_weekly['Year'] == current_year)]['percentage'].values[0]
                         except Exception as week:
                             notifier(week)
                             previousWeekPercentage = 0
@@ -881,37 +881,66 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         lastTradeOutcome = trade_df.iloc[-1]['trade']
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
 
+                        day_trade_perc = (trade_df.groupby(['day', 'month', 'Year'])
+                                        .agg({'percentage': 'sum'})
+                                        .sort_values(by=['Year', 'month', 'day'])
+                                        .reset_index())
+                                        
+                        last_trade_day = day_trade_perc.iloc[-1].day 
+
+                        if last_trade_day == datetime.utcnow().day:
+                            last_trade_day_perc = day_trade_perc.iloc[-2].percentage 
+                        else:
+                            last_trade_day_perc = day_trade_perc.iloc[-1].percentage 
+
                         notifier(
                             f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} Previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
 
                         lower_risk, neutral_risk, higher_risk
 
+
                         if previousWeekPercentage <= -0.03:
                             notifier(
                                 f'USDT : Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
                             risk = higher_risk
+
+                            if last_trade_day_perc > 0:
+                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                risk = lower_risk/2
+
                             if lastTradePerc > 0:
                                 notifier(
                                     f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk
+                                risk = lower_risk/previous_trade_win_divide
 
                         elif previousWeekPercentage >= 0.05:
                             notifier(
                                 f'USDT : Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
                             risk = lower_risk
+
+                            if last_trade_day_perc > 0:
+                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                risk = lower_risk/2
+
                             if lastTradePerc > 0:
                                 notifier(
                                     f'USDT : Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk/2
+                                risk = lower_risk/previous_trade_win_divide
 
                         else:
                             notifier(
                                 f'USDT : Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
                             risk = neutral_risk
+
+                            if last_trade_day_perc > 0:
+                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                risk = lower_risk/2
+
+                                
                             if lastTradePerc > 0:
                                 notifier(
                                     f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk/2
+                                risk = lower_risk/previous_trade_win_divide
 
                         try:
                             # close open position if any
