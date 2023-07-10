@@ -880,6 +880,12 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         lastTradePerc = trade_df.iloc[-1]['percentage']
                         lastTradeOutcome = trade_df.iloc[-1]['trade']
                         lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
+                        
+                        trade_df['OpenTime'] = pd.to_datetime(trade_df['OpenTime'])
+                        trade_df['day'] = trade_df['OpenTime'].dt.day
+                        trade_df['month'] = trade_df['OpenTime'].dt.month
+                        trade_df['Year'] = trade_df['OpenTime'].dt.year
+
 
                         day_trade_perc = (trade_df.groupby(['day', 'month', 'Year'])
                                         .agg({'percentage': 'sum'})
