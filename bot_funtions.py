@@ -748,7 +748,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first.")
     ]
     restart = 0
-    risk = 0.02
+    risk = 0.028
     neutral_risk = risk
     lower_risk = 0.01  # initial_risk/2
     higher_risk = risk * 1.5
