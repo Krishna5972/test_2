@@ -745,7 +745,16 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/14.gif", "In trading, impatience can lead to emotional decisions, while patience fosters a rational and disciplined approach.Lets the bot work 010101...."),
         ("data/15.gif", "In the pursuit of financial success, patience is not just a virtue, but a strategy. The market rewards those who can wait."),
         ("data/16.gif", "Rushing is the enemy of profit. In the stock market, the tortoise often beats the hare."),
-        ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first.")
+        ("data/5.gif", "If you are here for quick money, then market will definitely kick you out first."),
+        ("data/9.gif",r"90% of success in the markets come from just staying the course."),
+        ("data/2.gif","The only way you can win in the market is by not losing much."),
+        ("data/1.gif","Markets reward patience than any other skill."),
+        ("data/8.gif","We enjoy action. Markets reward inaction explain"),
+        ("data/4.gif","Let the bot work for you: Stay patient and let time be your ally."),
+        ("data/2.gif","Patience pays off: In markets, rewards often come to those who wait."),
+        ("data/1.gif","Time beats timing: Avoid the temptation to chase short-term gains and focus on long-term growth."),
+        ("data/12.gif","Simplicity triumphs: Keep your trading strategy straightforward and resist unnecessary tinkering"),
+        ("data/9.gif","Consistency breeds success: Stick to your plan and avoid being swayed by market noise"),
     ]
     restart = 0
     risk = 0.028
@@ -777,7 +786,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                 if symbol['symbol'] == f"{coin}USDT":
                     round_quantity = symbol['quantityPrecision']
                     break
-            notifier(round_quantity)
+            #notifier(round_quantity)
             indicator = 0
             weight_reduce = 0
             while True:
@@ -911,8 +920,8 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             risk = higher_risk
 
                             if last_trade_day_perc > 0:
-                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
-                                risk = lower_risk/2
+                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                risk = lower_risk
 
                             if lastTradePerc > 0:
                                 notifier(
@@ -922,10 +931,10 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         elif previousWeekPercentage >= 0.05:
                             notifier(
                                 f'USDT : Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
-                            risk = lower_risk
+                            risk = lower_risk/2
 
                             if last_trade_day_perc > 0:
-                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
                                 risk = lower_risk/2
 
                             if lastTradePerc > 0:
@@ -939,10 +948,9 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             risk = neutral_risk
 
                             if last_trade_day_perc > 0:
-                                notifier(f'Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
                                 risk = lower_risk/2
-
-                                
+ 
                             if lastTradePerc > 0:
                                 notifier(
                                     f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
@@ -988,11 +996,11 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
 
                         if signal == 'Buy' and ma_pos == 1:
                             notifier(
-                                f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
+                                f'USDT : Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
                             notifier(
-                                f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+                                f'USDT : Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                             notifier(
-                                f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
+                                f'USDT : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                             notifier(
                                 f'USDT : Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
 
@@ -1055,8 +1063,9 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             in_trade_usdt.value = 1
 
                         else:
-                            notifier(f'Not taking the trade')
+                            notifier(f'USDT : Not taking the trade')
 
+                        notifier('USDT : Change captured..')
                     else:
                         # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
                         # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
@@ -1172,9 +1181,8 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                         ema_pos, col_name=ma_condition, axis=1)
                     ma_pos = super_df.iloc[-1][f'{ma_condition}_pos']
                     super_df['condition'] = 0
-                    print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
-                    print(
-                        f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
+                    #print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
+                    #print(f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
 
                     if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
 
