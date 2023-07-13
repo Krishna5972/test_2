@@ -572,9 +572,9 @@ def create_signal_df(super_df, df, coin, timeframe, atr1, period, profit, sl):
 
     df = super_df
 
-    print(df.shape[0])
-    print(trade_df.shape[0])
-    print(super_df.shape[0])
+    # print(df.shape[0])
+    # print(trade_df.shape[0])
+    # print(super_df.shape[0])
     for i in indexes:
         try:
             trade_df.at[i, 'TradeOpenTime'] = df[df.index ==
