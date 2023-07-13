@@ -21,7 +21,7 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-from WatchDog import Watchdog
+from Watchdog import Watchdog
 
 
 def candle_size(x, coin):
