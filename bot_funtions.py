@@ -17,11 +17,11 @@ from datetime import datetime
 from numba import njit
 import traceback
 import sys
-import pytz
 import random
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+from WatchDog import Watchdog
 
 
 def candle_size(x, coin):
@@ -726,8 +726,8 @@ def notifier_with_gif(file_path, caption, tries=0):
 
 
 def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock):
-    print(f'timeframe : {timeframe}')
     notifier(f'Starting USDT function,SARAVANA BHAVA')
+    watchdog = Watchdog(timeout=59)
     sayings_and_gifs = [
         ("data/1.gif", "Bigger the patience, bigger the reward."),
         ("data/2.gif", "The market is a device for transferring money from the impatient to the patient."),
@@ -755,6 +755,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/1.gif","Time beats timing: Avoid the temptation to chase short-term gains and focus on long-term growth."),
         ("data/12.gif","Simplicity triumphs: Keep your trading strategy straightforward and resist unnecessary tinkering"),
         ("data/9.gif","Consistency breeds success: Stick to your plan and avoid being swayed by market noise"),
+        ("data/10.gif","Choose the pain of discipline in market trading or the pain of blowing up your trading account.")
     ]
     restart = 0
     risk = 0.028
@@ -790,32 +791,175 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
             indicator = 0
             weight_reduce = 0
             while True:
-                result = ws.recv()
-                data = json.loads(result)
-                if data['k']['x'] == True:
-                    candle = data['k']
-                    candle_data = [candle['t'], candle['o'],
-                                   candle['h'], candle['l'], candle['c'], candle['v']]
-                    temp_df = pd.DataFrame([candle_data], columns=[
-                                           'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
-                    df = pd.concat([df, temp_df])
-                    df = df[2:]
-                    df = df.reset_index(drop=True)
-                    df[['open', 'high', 'low', 'close', 'volume']] = df[[
-                        'open', 'high', 'low', 'close', 'volume']].astype(float)
-                    super_df = supertrend(coin, df, period, atr1, pivot_period)
-                    # print(df[-30:][['OpenTime','open','close','in_uptrend']])
-                    super_df[f'{ma_condition}_pos'] = super_df[[ma_condition, 'close']].apply(
-                        ema_pos, col_name=ma_condition, axis=1)
-                    ma_pos = super_df.iloc[-1][f'{ma_condition}_pos']
-                    if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
-                        acc_balance = round(float(client.futures_account()[
-                                            'totalCrossWalletBalance']), 2)
-                        weekday = pd.to_datetime(
-                            super_df.iloc[-1]['OpenTime']).weekday()
-                        canTrade = not (weekday == 5 or weekday == 6)
-                        print(f'USDT : Can Trade? : {canTrade}')
-                        if not canTrade:
+                watchdog.start()
+                try:
+                    result = ws.recv()
+                    data = json.loads(result)
+                    watchdog.reset()
+                    if data['k']['x'] == True:
+                        candle = data['k']
+                        candle_data = [candle['t'], candle['o'],
+                                    candle['h'], candle['l'], candle['c'], candle['v']]
+                        temp_df = pd.DataFrame([candle_data], columns=[
+                                            'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
+                        df = pd.concat([df, temp_df])
+                        df = df[2:]
+                        df = df.reset_index(drop=True)
+                        df[['open', 'high', 'low', 'close', 'volume']] = df[[
+                            'open', 'high', 'low', 'close', 'volume']].astype(float)
+                        super_df = supertrend(coin, df, period, atr1, pivot_period)
+                        # print(df[-30:][['OpenTime','open','close','in_uptrend']])
+                        super_df[f'{ma_condition}_pos'] = super_df[[ma_condition, 'close']].apply(
+                            ema_pos, col_name=ma_condition, axis=1)
+                        ma_pos = super_df.iloc[-1][f'{ma_condition}_pos']
+                        if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
+                            acc_balance = round(float(client.futures_account()[
+                                                'totalCrossWalletBalance']), 2)
+                            weekday = pd.to_datetime(
+                                super_df.iloc[-1]['OpenTime']).weekday()
+                            canTrade = not (weekday == 5 or weekday == 6)
+                            print(f'USDT : Can Trade? : {canTrade}')
+                            if not canTrade:
+                                try:
+                                    # close open position if any
+                                    close_position(client, coin, 'Sell')
+                                    in_trade_usdt.value = 0
+                                    notifier(f'USDT : Position Closed {timeframe}')
+                                except Exception as err:
+                                    try:
+                                        close_position(client, coin, 'Buy')
+                                        notifier(
+                                            f'USDT : Position Closed {timeframe}')
+                                        in_trade_usdt.value = 0
+                                    except Exception as e:
+                                        notifier(
+                                            f'USDT : No Open Position to Close {timeframe}')
+                                week_over_week(client, coin, acc_balance)
+                                notifier(
+                                    " USDT: Weekly Report is generated and sent via mail")
+
+                                if weekday == 5:
+                                    notifier(
+                                        " USDT:Not taking the trade as it is Saturday")
+                                else:
+                                    notifier(
+                                        "USDT:Not taking the trade as it is Sunday")
+                                continue
+
+                            trade_df = create_signal_df(
+                                super_df, df, coin, timeframe, atr1, period, 100, 100)
+
+                            trade_df['ema_signal'] = trade_df.apply(
+                                lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
+                            trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
+                                1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
+                            trade_df = trade_df[trade_df['pos_signal'] == 1]
+
+                            trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
+                            trade_df = trade_df[(trade_df['weekday'] != 5) & (
+                                trade_df['weekday'] != 6)]
+
+                            # Add 'Year' and 'Week' columns to the DataFrame
+                            trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar(
+                            ).year
+                            trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar(
+                            ).week
+
+                            # Group by the 'Year' and 'Week' columns and sum the 'percentage' column
+                            df_weekly = trade_df.groupby(['Year', 'Week'])[
+                                'percentage'].sum().reset_index()
+                            current_week = pd.to_datetime(
+                                datetime.now()).isocalendar()[1]
+                            current_year = pd.to_datetime(
+                                datetime.now()).isocalendar()[0]
+                            try:
+                                previousWeekPercentage = df_weekly[(df_weekly['Week'] == (current_week-1)) & (df_weekly['Year'] == current_year)]['percentage'].values[0]
+                            except Exception as week:
+                                notifier(week)
+                                previousWeekPercentage = 0
+
+                            notifier(
+                                f'USDT : Previous week percentage : {round(previousWeekPercentage,3)}')
+
+                            trade_df['ema_signal'] = trade_df.apply(
+                                lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
+                            trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
+                                1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
+                            trade_df = trade_df[trade_df['pos_signal'] == 1]
+
+                            trend_open_1 = trade_df.iloc[-1]['signal']
+                            price_open_1 = trade_df.iloc[-1]['entry']
+                            price_close_1 = trade_df.iloc[-1]['close_price']
+                            lastTradePerc = trade_df.iloc[-1]['percentage']
+                            lastTradeOutcome = trade_df.iloc[-1]['trade']
+                            lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
+                            
+                            trade_df['OpenTime'] = pd.to_datetime(trade_df['OpenTime'])
+                            trade_df['day'] = trade_df['OpenTime'].dt.day
+                            trade_df['month'] = trade_df['OpenTime'].dt.month
+                            trade_df['Year'] = trade_df['OpenTime'].dt.year
+
+
+                            day_trade_perc = (trade_df.groupby(['day', 'month', 'Year'])
+                                            .agg({'percentage': 'sum'})
+                                            .sort_values(by=['Year', 'month', 'day'])
+                                            .reset_index())
+                                            
+                            last_trade_day = day_trade_perc.iloc[-1].day 
+
+                            if last_trade_day == datetime.utcnow().day:
+                                last_trade_day_perc = day_trade_perc.iloc[-2].percentage 
+                            else:
+                                last_trade_day_perc = day_trade_perc.iloc[-1].percentage 
+
+                            notifier(
+                                f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} Previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
+
+                            lower_risk, neutral_risk, higher_risk
+
+
+                            if previousWeekPercentage <= -0.03:
+                                notifier(
+                                    f'USDT : Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
+                                risk = higher_risk
+
+                                if last_trade_day_perc > 0:
+                                    notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                    risk = lower_risk
+
+                                if lastTradePerc > 0:
+                                    notifier(
+                                        f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                    risk = lower_risk/previous_trade_win_divide
+
+                            elif previousWeekPercentage >= 0.05:
+                                notifier(
+                                    f'USDT : Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
+                                risk = lower_risk/2
+
+                                if last_trade_day_perc > 0:
+                                    notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                    risk = lower_risk/2
+
+                                if lastTradePerc > 0:
+                                    notifier(
+                                        f'USDT : Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
+                                    risk = lower_risk/previous_trade_win_divide
+
+                            else:
+                                notifier(
+                                    f'USDT : Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
+                                risk = neutral_risk
+
+                                if last_trade_day_perc > 0:
+                                    notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
+                                    risk = lower_risk/2
+    
+                                if lastTradePerc > 0:
+                                    notifier(
+                                        f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
+                                    risk = lower_risk/previous_trade_win_divide
+
                             try:
                                 # close open position if any
                                 close_position(client, coin, 'Sell')
@@ -824,287 +968,161 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                             except Exception as err:
                                 try:
                                     close_position(client, coin, 'Buy')
-                                    notifier(
-                                        f'USDT : Position Closed {timeframe}')
+                                    notifier(f'USDT : Position Closed {timeframe}')
                                     in_trade_usdt.value = 0
                                 except Exception as e:
                                     notifier(
                                         f'USDT : No Open Position to Close {timeframe}')
-                            week_over_week(client, coin, acc_balance)
-                            notifier(
-                                " USDT: Weekly Report is generated and sent via mail")
 
-                            if weekday == 5:
-                                notifier(
-                                    " USDT:Not taking the trade as it is Saturday")
+                                print(err)
+
+                            # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
+
+                            stake = (acc_balance*0.88)
+
+                            notifier(f'USDT : Allocated stake:{round(stake,2)}')
+
+                            signal = ['Buy' if super_df.iloc[-1]
+                                    ['in_uptrend'] == True else 'Sell'][0]
+                            entry = super_df.iloc[-1]['close']
+
+                            if signal == 'Buy':
+                                sl = super_df.iloc[-1]['lower_band']
+                                sl_perc = (entry-sl)/entry
                             else:
+                                sl = super_df.iloc[-1]['upper_band']
+                                sl_perc = (sl-entry)/entry
+
+                            stake = (stake*risk)/sl_perc
+                            quantity = round(stake/entry, round_quantity)
+
+                            rr = 88
+
+                            if signal == 'Buy' and ma_pos == 1:
                                 notifier(
-                                    "USDT:Not taking the trade as it is Sunday")
-                            continue
-
-                        trade_df = create_signal_df(
-                            super_df, df, coin, timeframe, atr1, period, 100, 100)
-
-                        trade_df['ema_signal'] = trade_df.apply(
-                            lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
-                        trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
-                            1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
-                        trade_df = trade_df[trade_df['pos_signal'] == 1]
-
-                        trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
-                        trade_df = trade_df[(trade_df['weekday'] != 5) & (
-                            trade_df['weekday'] != 6)]
-
-                        # Add 'Year' and 'Week' columns to the DataFrame
-                        trade_df['Year'] = trade_df['TradeOpenTime'].dt.isocalendar(
-                        ).year
-                        trade_df['Week'] = trade_df['TradeOpenTime'].dt.isocalendar(
-                        ).week
-
-                        # Group by the 'Year' and 'Week' columns and sum the 'percentage' column
-                        df_weekly = trade_df.groupby(['Year', 'Week'])[
-                            'percentage'].sum().reset_index()
-                        current_week = pd.to_datetime(
-                            datetime.now()).isocalendar()[1]
-                        current_year = pd.to_datetime(
-                            datetime.now()).isocalendar()[0]
-                        try:
-                            previousWeekPercentage = df_weekly[(df_weekly['Week'] == (current_week-1)) & (df_weekly['Year'] == current_year)]['percentage'].values[0]
-                        except Exception as week:
-                            notifier(week)
-                            previousWeekPercentage = 0
-
-                        notifier(
-                            f'USDT : Previous week percentage : {round(previousWeekPercentage,3)}')
-
-                        trade_df['ema_signal'] = trade_df.apply(
-                            lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
-                        trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
-                            1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
-                        trade_df = trade_df[trade_df['pos_signal'] == 1]
-
-                        trend_open_1 = trade_df.iloc[-1]['signal']
-                        price_open_1 = trade_df.iloc[-1]['entry']
-                        price_close_1 = trade_df.iloc[-1]['close_price']
-                        lastTradePerc = trade_df.iloc[-1]['percentage']
-                        lastTradeOutcome = trade_df.iloc[-1]['trade']
-                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
-                        
-                        trade_df['OpenTime'] = pd.to_datetime(trade_df['OpenTime'])
-                        trade_df['day'] = trade_df['OpenTime'].dt.day
-                        trade_df['month'] = trade_df['OpenTime'].dt.month
-                        trade_df['Year'] = trade_df['OpenTime'].dt.year
-
-
-                        day_trade_perc = (trade_df.groupby(['day', 'month', 'Year'])
-                                        .agg({'percentage': 'sum'})
-                                        .sort_values(by=['Year', 'month', 'day'])
-                                        .reset_index())
-                                        
-                        last_trade_day = day_trade_perc.iloc[-1].day 
-
-                        if last_trade_day == datetime.utcnow().day:
-                            last_trade_day_perc = day_trade_perc.iloc[-2].percentage 
-                        else:
-                            last_trade_day_perc = day_trade_perc.iloc[-1].percentage 
-
-                        notifier(
-                            f'USDT : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} Previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
-
-                        lower_risk, neutral_risk, higher_risk
-
-
-                        if previousWeekPercentage <= -0.03:
-                            notifier(
-                                f'USDT : Increasing the risk as previous week was negative {round(previousWeekPercentage,3)}')
-                            risk = higher_risk
-
-                            if last_trade_day_perc > 0:
-                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
-                                risk = lower_risk
-
-                            if lastTradePerc > 0:
+                                    f'USDT : Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
                                 notifier(
-                                    f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk/previous_trade_win_divide
-
-                        elif previousWeekPercentage >= 0.05:
-                            notifier(
-                                f'USDT : Decreasing the risk as previous week was positive {round(previousWeekPercentage,3)}')
-                            risk = lower_risk/2
-
-                            if last_trade_day_perc > 0:
-                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
-                                risk = lower_risk/2
-
-                            if lastTradePerc > 0:
+                                    f'USDT : Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
                                 notifier(
-                                    f'USDT : Decreasing the by huge as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk/previous_trade_win_divide
-
-                        else:
-                            notifier(
-                                f'USDT : Neutral risk as previous week was between -0.03 and 0.05 {round(previousWeekPercentage,3)}')
-                            risk = neutral_risk
-
-                            if last_trade_day_perc > 0:
-                                notifier(f'USDT : Decreasing the risk as previous day was positive {round(last_trade_day_perc,3)}')
-                                risk = lower_risk/2
- 
-                            if lastTradePerc > 0:
+                                    f'USDT : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
                                 notifier(
-                                    f'USDT : Decreasing the risk as previous trade was a win {round(lastTradePerc,3)}')
-                                risk = lower_risk/previous_trade_win_divide
+                                    f'USDT : Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
 
-                        try:
-                            # close open position if any
-                            close_position(client, coin, 'Sell')
-                            in_trade_usdt.value = 0
-                            notifier(f'USDT : Position Closed {timeframe}')
-                        except Exception as err:
-                            try:
-                                close_position(client, coin, 'Buy')
-                                notifier(f'USDT : Position Closed {timeframe}')
-                                in_trade_usdt.value = 0
-                            except Exception as e:
+                                # buy order
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='LONG')
+
+                                take_profit = entry+((entry-sl)*rr)
                                 notifier(
-                                    f'USDT : No Open Position to Close {timeframe}')
+                                    f'USDT : TP : {round(take_profit,round_price)}')
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT',
+                                    price=round(take_profit, round_price),
+                                    side='SELL',
+                                    positionSide='LONG',
+                                    quantity=quantity,
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                                )
+                                in_trade_usdt.value = 1
 
-                            print(err)
+                            elif signal == 'Sell' and ma_pos == -1:
+                                notifier(
+                                    f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
+                                notifier(
+                                    f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+                                notifier(
+                                    f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
+                                notifier(
+                                    f'USDT : Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
 
-                        # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
+                                # sell order
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='SHORT')
 
-                        stake = (acc_balance*0.88)
+                                take_profit = entry-((sl-entry)*rr)
+                                notifier(
+                                    f'USDT : TP : {round(take_profit,round_price)}')
+                                if take_profit < 0:
+                                    take_profit = entry/2
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT',
+                                    price=round(take_profit, round_price),
+                                    side='BUY',
+                                    positionSide='SHORT',
+                                    quantity=quantity,
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                                )
+                                in_trade_usdt.value = 1
 
-                        notifier(f'USDT : Allocated stake:{round(stake,2)}')
-
-                        signal = ['Buy' if super_df.iloc[-1]
-                                  ['in_uptrend'] == True else 'Sell'][0]
-                        entry = super_df.iloc[-1]['close']
-
-                        if signal == 'Buy':
-                            sl = super_df.iloc[-1]['lower_band']
-                            sl_perc = (entry-sl)/entry
-                        else:
-                            sl = super_df.iloc[-1]['upper_band']
-                            sl_perc = (sl-entry)/entry
-
-                        stake = (stake*risk)/sl_perc
-                        quantity = round(stake/entry, round_quantity)
-
-                        rr = 88
-
-                        if signal == 'Buy' and ma_pos == 1:
-                            notifier(
-                                f'USDT : Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
-                            notifier(
-                                f'USDT : Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
-                            notifier(
-                                f'USDT : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
-                            notifier(
-                                f'USDT : Bought @{entry}, Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-
-                            # buy order
-                            client.futures_create_order(
-                                symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='LONG')
-
-                            take_profit = entry+((entry-sl)*rr)
-                            notifier(
-                                f'USDT : TP : {round(take_profit,round_price)}')
-                            client.futures_create_order(
-                                symbol=f'{coin}USDT',
-                                price=round(take_profit, round_price),
-                                side='SELL',
-                                positionSide='LONG',
-                                quantity=quantity,
-                                timeInForce='GTC',
-                                type='LIMIT',
-                                # reduceOnly=True,
-                                closePosition=False,
-                                # stopPrice=round(take_profit,2),
-                                workingType='MARK_PRICE',
-                                priceProtect=True
-                            )
-                            in_trade_usdt.value = 1
-
-                        elif signal == 'Sell' and ma_pos == -1:
-                            notifier(
-                                f'Previous week percentage : {round(previousWeekPercentage,2)} Current risk : {risk}')
-                            notifier(
-                                f'Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
-                            notifier(
-                                f'Trend Changed {signal} and ma condition {ma_condition} is {ma_pos}')
-                            notifier(
-                                f'USDT : Sold @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-
-                            # sell order
-                            client.futures_create_order(
-                                symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='SHORT')
-
-                            take_profit = entry-((sl-entry)*rr)
-                            notifier(
-                                f'USDT : TP : {round(take_profit,round_price)}')
-                            if take_profit < 0:
-                                take_profit = entry/2
-                            client.futures_create_order(
-                                symbol=f'{coin}USDT',
-                                price=round(take_profit, round_price),
-                                side='BUY',
-                                positionSide='SHORT',
-                                quantity=quantity,
-                                timeInForce='GTC',
-                                type='LIMIT',
-                                # reduceOnly=True,
-                                closePosition=False,
-                                # stopPrice=round(take_profit,2),
-                                workingType='MARK_PRICE',
-                                priceProtect=True
-                            )
-                            in_trade_usdt.value = 1
-
-                        else:
-                            notifier(f'USDT : Not taking the trade')
-
-                        notifier('USDT : Change captured..')
-                    else:
-                        # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
-                        # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
-                        notifier(f'USDT : {timeframe} candle closed : {coin}')
-
-                        if in_trade_usdt.value == 1 and weight_reduce >= 1:
-                            weight_reduce = 0
-                            open_orders = client.futures_get_open_orders(
-                                symbol=f'{coin}USDT')
-                            if len(open_orders) == 0:
-                                in_trade_usdt.value = 0
-                                notifier('USDT Pos closed in profit')
-
-                        if indicator > 5:
-                            indicator = 0  # notification every 60 minutes
-                            information = client.futures_account()
-                            totalUnrealizedProfit = round(
-                                float(information['totalUnrealizedProfit']), 2)
-                            bal = round(
-                                float(information['totalCrossWalletBalance']), 2)
-                            if bal > 320:  # Month initial
-                                bal_pos = 'Profit'
                             else:
-                                bal_pos = 'Loss'
+                                notifier(f'USDT : Not taking the trade')
 
-                            if totalUnrealizedProfit > 0:
-                                profit_pos = 'Green'
-                            elif totalUnrealizedProfit == 0:
-                                profit_pos = 'Neutral'
-                            else:
-                                profit_pos = 'Red'
+                            notifier('USDT : Change captured..')
+                        else:
+                            # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
+                            # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
+                            notifier(f'USDT : {timeframe} candle closed : {coin}')
 
-                            notifier(
-                                f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value},Bal :{bal_pos},PNL:{profit_pos}')
+                            if in_trade_usdt.value == 1 and weight_reduce >= 1:
+                                weight_reduce = 0
+                                open_orders = client.futures_get_open_orders(
+                                    symbol=f'{coin}USDT')
+                                if len(open_orders) == 0:
+                                    in_trade_usdt.value = 0
+                                    notifier('USDT Pos closed in profit')
 
-                            makeSense(sayings_and_gifs)
+                            if indicator > 5:
+                                indicator = 0  # notification every 60 minutes
+                                information = client.futures_account()
+                                totalUnrealizedProfit = round(
+                                    float(information['totalUnrealizedProfit']), 2)
+                                bal = round(
+                                    float(information['totalCrossWalletBalance']), 2)
+                                if bal > 320:  # Month initial
+                                    bal_pos = 'Profit'
+                                else:
+                                    bal_pos = 'Loss'
 
-                        weight_reduce += 1
-                        indicator += 1
+                                if totalUnrealizedProfit > 0:
+                                    profit_pos = 'Green'
+                                elif totalUnrealizedProfit == 0:
+                                    profit_pos = 'Neutral'
+                                else:
+                                    profit_pos = 'Red'
+
+                                notifier(
+                                    f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value},Bal :{bal_pos},PNL:{profit_pos}')
+
+                                makeSense(sayings_and_gifs)
+
+                            weight_reduce += 1
+                            indicator += 1
+                except Exception as inner_error:
+                    notifier(inner_error)
+                    notifier(f'Restarting USDT function : {coin}')
+                    print(inner_error)
+                    restart = 1
+                    ws.close()
+                    watchdog.stop()
+                    tb = traceback.extract_tb(sys.exc_info()[2])
+                    filename, line, func, text = tb[-1]
+                    print(f'An error occurred on line USDT {line}: {inner_error}')
+                    print("Exception occurred usdt:\n", traceback.format_exc())
+                    notifier(f'USDT : An error occurred on line USDT {line}: {inner_error}')
+                    notifier("USDT : Exception occurred usdt:\n", traceback.format_exc())
+                    time.sleep(10)
 
         except Exception as err:
             notifier(err)
@@ -1129,8 +1147,8 @@ def makeSense(sayings_and_gifs):
 
 def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock):
     notifier(f'Starting BUSD function,SARAVANA BHAVA')
-    print(f'timeframe : {timeframe}')
     restart = 0
+    watchdog = Watchdog(timeout=59)
 
     while (True):
         if restart == 1:
@@ -1163,34 +1181,113 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                     break
             notifier(f'BUSD : Round Quantity :{round_quantity} ')
             while True:
-                result = ws.recv()
-                data = json.loads(result)
-                if data['k']['x'] == True:
-                    candle = data['k']
-                    candle_data = [candle['t'], candle['o'],
-                                   candle['h'], candle['l'], candle['c'], candle['v']]
-                    temp_df = pd.DataFrame([candle_data], columns=[
-                                           'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
-                    df = pd.concat([df, temp_df])
-                    df = df[2:]
-                    df = df.reset_index(drop=True)
-                    df[['open', 'high', 'low', 'close', 'volume']] = df[[
-                        'open', 'high', 'low', 'close', 'volume']].astype(float)
-                    super_df = supertrend(coin, df, period, atr1, pivot_period)
-                    super_df[f'{ma_condition}_pos'] = super_df[[ma_condition, 'close']].apply(
-                        ema_pos, col_name=ma_condition, axis=1)
-                    ma_pos = super_df.iloc[-1][f'{ma_condition}_pos']
-                    super_df['condition'] = 0
-                    #print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
-                    #print(f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
+                watchdog.start()
+                try:
+                    result = ws.recv()
+                    data = json.loads(result)
+                    watchdog.reset()
+                    if data['k']['x'] == True:
+                        candle = data['k']
+                        candle_data = [candle['t'], candle['o'],
+                                    candle['h'], candle['l'], candle['c'], candle['v']]
+                        temp_df = pd.DataFrame([candle_data], columns=[
+                                            'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
+                        df = pd.concat([df, temp_df])
+                        df = df[2:]
+                        df = df.reset_index(drop=True)
+                        df[['open', 'high', 'low', 'close', 'volume']] = df[[
+                            'open', 'high', 'low', 'close', 'volume']].astype(float)
+                        super_df = supertrend(coin, df, period, atr1, pivot_period)
+                        super_df[f'{ma_condition}_pos'] = super_df[[ma_condition, 'close']].apply(
+                            ema_pos, col_name=ma_condition, axis=1)
+                        ma_pos = super_df.iloc[-1][f'{ma_condition}_pos']
+                        super_df['condition'] = 0
+                        #print(f'BUSD : {super_df.iloc[-1]["OpenTime"]}')
+                        #print(f'BUSD : Weekday : {pd.to_datetime(super_df.iloc[-1]["OpenTime"]).weekday()}')
 
-                    if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
+                        if super_df.iloc[-1]['in_uptrend'] != super_df.iloc[-2]['in_uptrend']:
 
-                        weekday = pd.to_datetime(
-                            super_df.iloc[-1]['OpenTime']).weekday()
-                        canTrade = not (weekday == 5 or weekday == 6)
-                        print(f'BUSD : Can Trade? : {canTrade}')
-                        if not canTrade:
+                            weekday = pd.to_datetime(
+                                super_df.iloc[-1]['OpenTime']).weekday()
+                            canTrade = not (weekday == 5 or weekday == 6)
+                            print(f'BUSD : Can Trade? : {canTrade}')
+                            if not canTrade:
+                                try:
+                                    # close open position if any
+                                    close_position_busd(client, coin, 'Sell')
+                                    notifier(f'BUSD : Position Closed {timeframe}')
+                                    in_trade_busd.value = 0
+                                except Exception as err:
+                                    try:
+                                        close_position_busd(client, coin, 'Buy')
+                                        notifier(
+                                            f'BUSD : Position Closed {timeframe}')
+                                        in_trade_busd.value = 0
+                                    except Exception as e:
+                                        notifier(
+                                            f'BUSD : No Position to close {timeframe}')
+
+                                if weekday == 5:
+                                    notifier(
+                                        "BUSD : Not taking the trade as it is Saturday")
+                                else:
+                                    notifier(
+                                        "BUSD : Not taking the trade as it is Sunday")
+
+                                continue
+                            initial_risk = 0.01
+                            risk = initial_risk
+                            # super_df.to_csv('super_df.csv',mode='w+',index=False)
+                        # df.to_csv('df.csv',index=False)
+                            trade_df = create_signal_df(
+                                super_df, df, coin, timeframe, atr1, period, 100, 100)
+
+                            trade_df['ema_signal'] = trade_df.apply(
+                                lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
+                            trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
+                                1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
+                            trade_df = trade_df[trade_df['pos_signal'] == 1]
+                            trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
+                            trade_df = trade_df[(trade_df['weekday'] != 5) & (
+                                trade_df['weekday'] != 6)]
+                            trend_open_1 = trade_df.iloc[-1]['signal']
+                            price_open_1 = trade_df.iloc[-1]['entry']
+                            price_close_1 = trade_df.iloc[-1]['close_price']
+                            lastTradePerc = trade_df.iloc[-1]['percentage']
+                            lastTradeOutcome = trade_df.iloc[-1]['trade']
+                            lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
+
+                            notifier(
+                                f'BUSD : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
+
+                            trend_open_2 = trade_df.iloc[-2]['signal']  # openprice
+                            time_open_2 = trade_df.iloc[-2]['OpenTime']
+                            price_open_2 = trade_df.iloc[-2]['entry']
+                            lastTradeOpenTime_2 = trade_df.iloc[-2]['OpenTime']
+
+                            price_close_2 = trade_df.iloc[-2]['close_price']
+                            lastTradeOutcome_2 = trade_df.iloc[-2]['trade']
+                            lastTradePerc_2 = trade_df.iloc[-2]['percentage']
+
+                            notifier(
+                                f'BUSD : Previous trade 2 :OpenTime : {lastTradeOpenTime_2} singal :{trend_open_2}, open : {price_open_2} close : {price_close_2} previous_trade_returns : {round(lastTradePerc_2,2)} lastTradeOutcome : {lastTradeOutcome_2}')
+
+                            if lastTradeOutcome == 'W':
+                                notifier(
+                                    'BUSD : Last one was a win reducing the risk')
+                                risk = initial_risk/2
+                            else:
+                                notifier(
+                                    'BUSD : Last one was a Loss not reducing the risk')
+
+                            if lastTradeOutcome == 'W' and lastTradeOutcome_2 == 'W':
+                                notifier(
+                                    'BUSD : Last two were wins reducing the risk drastically')
+                                risk = initial_risk/3
+                            else:
+                                notifier(
+                                    'BUSD : One of last two a was win or both L so not reducing the risk drastically')
+
                             try:
                                 # close open position if any
                                 close_position_busd(client, coin, 'Sell')
@@ -1199,179 +1296,119 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                             except Exception as err:
                                 try:
                                     close_position_busd(client, coin, 'Buy')
-                                    notifier(
-                                        f'BUSD : Position Closed {timeframe}')
+                                    notifier(f'BUSD : Position Closed {timeframe}')
                                     in_trade_busd.value = 0
                                 except Exception as e:
                                     notifier(
                                         f'BUSD : No Position to close {timeframe}')
 
-                            if weekday == 5:
-                                notifier(
-                                    "BUSD : Not taking the trade as it is Saturday")
-                            else:
-                                notifier(
-                                    "BUSD : Not taking the trade as it is Sunday")
-
-                            continue
-                        initial_risk = 0.01
-                        risk = initial_risk
-                        # super_df.to_csv('super_df.csv',mode='w+',index=False)
-                       # df.to_csv('df.csv',index=False)
-                        trade_df = create_signal_df(
-                            super_df, df, coin, timeframe, atr1, period, 100, 100)
-
-                        trade_df['ema_signal'] = trade_df.apply(
-                            lambda x: 1 if x['entry'] > x[ma_condition] else -1, axis=1)
-                        trade_df['pos_signal'] = trade_df.apply(lambda x: 1 if x['signal'] == 'Buy' and x['ema_signal'] == 1 else (
-                            1 if x['signal'] == 'Sell' and x['ema_signal'] == -1 else 0), axis=1)
-                        trade_df = trade_df[trade_df['pos_signal'] == 1]
-                        trade_df['weekday'] = trade_df['TradeOpenTime'].dt.weekday
-                        trade_df = trade_df[(trade_df['weekday'] != 5) & (
-                            trade_df['weekday'] != 6)]
-                        trend_open_1 = trade_df.iloc[-1]['signal']
-                        price_open_1 = trade_df.iloc[-1]['entry']
-                        price_close_1 = trade_df.iloc[-1]['close_price']
-                        lastTradePerc = trade_df.iloc[-1]['percentage']
-                        lastTradeOutcome = trade_df.iloc[-1]['trade']
-                        lastTradeOpenTime = trade_df.iloc[-1]['OpenTime']
-
-                        notifier(
-                            f'BUSD : Previous trade 1 :Opentime : {lastTradeOpenTime} singal :{trend_open_1}, open : {price_open_1} close : {price_close_1} previous_trade_returns : {round(lastTradePerc,2)} lastTradeOutcome : {lastTradeOutcome}')
-
-                        trend_open_2 = trade_df.iloc[-2]['signal']  # openprice
-                        time_open_2 = trade_df.iloc[-2]['OpenTime']
-                        price_open_2 = trade_df.iloc[-2]['entry']
-                        lastTradeOpenTime_2 = trade_df.iloc[-2]['OpenTime']
-
-                        price_close_2 = trade_df.iloc[-2]['close_price']
-                        lastTradeOutcome_2 = trade_df.iloc[-2]['trade']
-                        lastTradePerc_2 = trade_df.iloc[-2]['percentage']
-
-                        notifier(
-                            f'BUSD : Previous trade 2 :OpenTime : {lastTradeOpenTime_2} singal :{trend_open_2}, open : {price_open_2} close : {price_close_2} previous_trade_returns : {round(lastTradePerc_2,2)} lastTradeOutcome : {lastTradeOutcome_2}')
-
-                        if lastTradeOutcome == 'W':
-                            notifier(
-                                'BUSD : Last one was a win reducing the risk')
-                            risk = initial_risk/2
-                        else:
-                            notifier(
-                                'BUSD : Last one was a Loss not reducing the risk')
-
-                        if lastTradeOutcome == 'W' and lastTradeOutcome_2 == 'W':
-                            notifier(
-                                'BUSD : Last two were wins reducing the risk drastically')
-                            risk = initial_risk/3
-                        else:
-                            notifier(
-                                'BUSD : One of last two a was win or both L so not reducing the risk drastically')
-
-                        try:
-                            # close open position if any
-                            close_position_busd(client, coin, 'Sell')
-                            notifier(f'BUSD : Position Closed {timeframe}')
-                            in_trade_busd.value = 0
-                        except Exception as err:
-                            try:
-                                close_position_busd(client, coin, 'Buy')
-                                notifier(f'BUSD : Position Closed {timeframe}')
-                                in_trade_busd.value = 0
-                            except Exception as e:
-                                notifier(
-                                    f'BUSD : No Position to close {timeframe}')
-
-                        # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
-                        acc_balance = round(float(client.futures_account()[
-                                            'totalCrossWalletBalance']), 2)
-
-                        stake = (acc_balance*0.88)
-
-                        notifier(
-                            f'BUSD : Allocated stake:{round(stake,2)} Risk : {risk}')
-
-                        signal = ['Buy' if super_df.iloc[-1]
-                                  ['in_uptrend'] == True else 'Sell'][0]
-                        entry = super_df.iloc[-1]['close']
-
-                        if signal == 'Buy':
-                            sl = super_df.iloc[-1]['lower_band']
-                            sl_perc = (entry-sl)/entry
-                        else:
-                            sl = super_df.iloc[-1]['upper_band']
-                            sl_perc = (sl-entry)/entry
-
-                        stake = (stake*risk)/sl_perc
-                        quantity = round(stake/entry, round_quantity)
-
-                        if signal == 'Buy' and ma_pos == 1:
-                            # buy order
-                            client.futures_create_order(
-                                symbol=f'{coin}BUSD', side='BUY', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='LONG')
-                            notifier(
-                                f'BUSD : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1][ma_condition]}')
-
-                            notifier(
-                                f'BUSD : Bought BUSD @{entry} , Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            in_trade_busd.value = 1
-                            notifier(
-                                f'BUSD : Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
-
-                        elif signal == 'Sell' and ma_pos == -1:
-
-                            # sell order
-                            client.futures_create_order(
-                                symbol=f'{coin}BUSD', side='SELL', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='SHORT')
-                            notifier(
-                                f'BUSD : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1][ma_condition]}')
-
-                            notifier(
-                                f'BUSD : Sold BUSD @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
-                            in_trade_busd.value = 1
-                            notifier(
-                                f'BUSD : Risk adjusted stake:{round(stake,3)},entry:{entry},sl_perc: {round(sl_perc,3)}')
-                        else:
-                            notifier(f'BUSD : Not taking the trade')
-                    else:
-                        notifier(f'BUSD : {timeframe} candle closed : {coin}')
-
-                    try:
-                        now = datetime.utcnow()
-                        if now.hour == 23 and now.minute < 29:
+                            # print(f'scanning busd {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value} , sleeping for {sleep_time*60} seconds')
                             acc_balance = round(float(client.futures_account()[
                                                 'totalCrossWalletBalance']), 2)
 
-                            current_day_dict = {
-                                now.strftime('%d-%m-%Y'): acc_balance
-                            }
-                            try:
-                                with open('data/day_over_day_dict.pkl', 'rb') as file:
-                                    day_over_day_dict = pickle.load(file)
-                            except Exception as e:
-                                day_over_day_dict = {}
+                            stake = (acc_balance*0.88)
+
+                            notifier(
+                                f'BUSD : Allocated stake:{round(stake,2)} Risk : {risk}')
+
+                            signal = ['Buy' if super_df.iloc[-1]
+                                    ['in_uptrend'] == True else 'Sell'][0]
+                            entry = super_df.iloc[-1]['close']
+
+                            if signal == 'Buy':
+                                sl = super_df.iloc[-1]['lower_band']
+                                sl_perc = (entry-sl)/entry
+                            else:
+                                sl = super_df.iloc[-1]['upper_band']
+                                sl_perc = (sl-entry)/entry
+
+                            stake = (stake*risk)/sl_perc
+                            quantity = round(stake/entry, round_quantity)
+
+                            if signal == 'Buy' and ma_pos == 1:
+                                # buy order
+                                client.futures_create_order(
+                                    symbol=f'{coin}BUSD', side='BUY', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='LONG')
+                                notifier(
+                                    f'BUSD : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1][ma_condition]}')
+
+                                notifier(
+                                    f'BUSD : Bought BUSD @{entry} , Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
+                                in_trade_busd.value = 1
+                                notifier(
+                                    f'BUSD : Risk adjusted stake:{round(stake,2)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+
+                            elif signal == 'Sell' and ma_pos == -1:
+
+                                # sell order
+                                client.futures_create_order(
+                                    symbol=f'{coin}BUSD', side='SELL', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='SHORT')
+                                notifier(
+                                    f'BUSD : Trend Changed {signal} and ma condition {ma_condition} is {ma_pos},close : {entry} , ma: {super_df.iloc[-1][ma_condition]}')
+
+                                notifier(
+                                    f'BUSD : Sold BUSD @{entry},Timeframe : {timeframe} , pivot_period: {pivot_period},atr:{atr1},period : {period},ma :{ma_condition}')
+                                in_trade_busd.value = 1
+                                notifier(
+                                    f'BUSD : Risk adjusted stake:{round(stake,3)},entry:{entry},sl_perc: {round(sl_perc,3)}')
+                            else:
+                                notifier(f'BUSD : Not taking the trade')
+                        else:
+                            notifier(f'BUSD : {timeframe} candle closed : {coin}')
+
+                        try:
+                            now = datetime.utcnow()
+                            if now.hour == 23 and now.minute < 29:
+                                acc_balance = round(float(client.futures_account()[
+                                                    'totalCrossWalletBalance']), 2)
+
+                                current_day_dict = {
+                                    now.strftime('%d-%m-%Y'): acc_balance
+                                }
+                                try:
+                                    with open('data/day_over_day_dict.pkl', 'rb') as file:
+                                        day_over_day_dict = pickle.load(file)
+                                except Exception as e:
+                                    day_over_day_dict = {}
+                                    with open('data/day_over_day_dict.pkl', 'wb') as file:
+                                        pickle.dump(day_over_day_dict, file)
+
+                                day_over_day_dict = combine_dicts(
+                                    day_over_day_dict, current_day_dict)
+
                                 with open('data/day_over_day_dict.pkl', 'wb') as file:
                                     pickle.dump(day_over_day_dict, file)
 
-                            day_over_day_dict = combine_dicts(
-                                day_over_day_dict, current_day_dict)
+                                notifier(f'Daily price captured')
 
-                            with open('data/day_over_day_dict.pkl', 'wb') as file:
-                                pickle.dump(day_over_day_dict, file)
-
-                            notifier(f'Daily price captured')
-
-                    except Exception as e:
-                        notifier('Error while capturing the price')
-
+                        except Exception as e:
+                            notifier('Error while capturing the price')
+                except Exception as inner_error:
+                    notifier(inner_error)
+                    notifier(f'Restarting BUSD function : {coin}')
+                    print(inner_error)
+                    restart = 1
+                    ws.close()
+                    watchdog.stop()
+                    tb = traceback.extract_tb(sys.exc_info()[2])
+                    filename, line, func, text = tb[-1]
+                    print(f'An error occurred on line USDT {line}: {inner_error}')
+                    print("Exception occurred usdt:\n", traceback.format_exc())
+                    notifier(f'BUSD : An error occurred on line USDT {line}: {inner_error}')
+                    notifier("BUSD :Exception occurred usdt:\n", traceback.format_exc())
+                    time.sleep(10)
         except Exception as e:
             notifier(e)
             notifier(f'BUSD : Restarting BUSD function : {coin}')
             print(e)
             ws.close()
+            watchdog.stop()
             tb = traceback.extract_tb(sys.exc_info()[2])
             filename, line, func, text = tb[-1]
             print(f'An error occurred on line USDT {line}: {e}')
             print("Exception occurred:\n", traceback.format_exc())
+            notifier(f'An error occurred on line USDT {line}: {e}')
+            notifier("Exception occurred:\n", traceback.format_exc())
             time.sleep(10)
             restart = 1
 
