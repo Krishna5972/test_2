@@ -711,7 +711,7 @@ def notifier_with_photo(file_path, caption, tries=25):
        
 
 
-def notifier_with_gif(file_path, caption, tries=0):
+def notifier_with_gif(file_path, caption, tries=25):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendDocument'
     files = {'document': open(file_path, 'rb')}
     data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
