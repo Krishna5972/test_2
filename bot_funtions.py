@@ -679,50 +679,52 @@ def df_perc_cal(entries, closes, signals, percentages):
     return percentages
 
 
-def notifier(message, tries=0):
+def notifier(message, tries=25):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage?chat_id=@{telegram_group_id}&text={message}'
     # https://api.telegram.org/bot5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo/sendMessage?chat_id=@notifier2_scanner_bot_link&text=hii
-    tel_resp = requests.get(telegram_api_url)
-    if tel_resp.status_code == 200:
-        pass
-    else:
-        while (tries < 25):
-            print(f'Telegram notifier problem retrying {tries}')
-            tries += 1
-            time.sleep(0.5)
-            notifier(message, tries)
+    
+    for try_num in range(tries):
+        tel_resp = requests.get(telegram_api_url)
+        if tel_resp.status_code == 200:
+            return
+        else:
+            print(f'Telegram notifier problem. Try number: {try_num + 1}')
+            time.sleep(1)
+        
+    print(f'Failed to send message after {tries} attempts.')
 
 
-def notifier_with_photo(file_path, caption, tries=0):
+def notifier_with_photo(file_path, caption, tries=25):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendPhoto'
     files = {'photo': open(file_path, 'rb')}
     data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
-    tel_resp = requests.post(telegram_api_url, files=files, data=data)
 
-    if tel_resp.status_code == 200:
-        pass
-    else:
-        while tries < 25:
-            print(f'Telegram notifier problem retrying {tries}')
-            tries += 1
-            time.sleep(0.5)
-            notifier_with_photo(file_path, caption, tries)
+    for try_num in range(tries):
+        tel_resp = requests.post(telegram_api_url, files=files, data=data)
+
+        if tel_resp.status_code == 200:
+            return
+        else:  
+            print(f'Telegram notifier problem. Try number: {try_num + 1}')
+            time.sleep(1)
+    print(f'Failed to send photo after {tries} attempts.')
+       
 
 
 def notifier_with_gif(file_path, caption, tries=0):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendDocument'
     files = {'document': open(file_path, 'rb')}
     data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
-    tel_resp = requests.post(telegram_api_url, files=files, data=data)
 
-    if tel_resp.status_code == 200:
-        pass
-    else:
-        while tries < 25:
-            print(f'Telegram notifier problem retrying {tries}')
-            tries += 1
-            time.sleep(0.5)
-            notifier_with_gif(file_path, caption, tries)
+    for try_num in range(tries):
+        tel_resp = requests.post(telegram_api_url, files=files, data=data)
+
+        if tel_resp.status_code == 200:
+            return
+        else:
+            print(f'Telegram notifier problem. Try number: {try_num + 1}')
+            time.sleep(1)
+    print(f'Failed to send gif after {tries} attempts.')
 
 
 def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock):
@@ -1121,7 +1123,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                     print(f'An error occurred on line USDT {line}: {inner_error}')
                     print("Exception occurred usdt:\n", traceback.format_exc())
                     notifier(f'USDT : An error occurred on line USDT {line}: {inner_error}')
-                    notifier("USDT : Exception occurred usdt:\n", traceback.format_exc())
+                    notifier(f"USDT : Exception occurred usdt  {traceback.format_exc()}")
                     time.sleep(10)
 
         except Exception as err:
@@ -1134,6 +1136,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
             filename, line, func, text = tb[-1]
             print(f'An error occurred on line USDT {line}: {err}')
             print("Exception occurred usdt:\n", traceback.format_exc())
+            notifier(f"USDT : Exception occurred usdt  {traceback.format_exc()}")
             time.sleep(10)
 
 
@@ -1395,7 +1398,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                     print(f'An error occurred on line USDT {line}: {inner_error}')
                     print("Exception occurred usdt:\n", traceback.format_exc())
                     notifier(f'BUSD : An error occurred on line USDT {line}: {inner_error}')
-                    notifier("BUSD :Exception occurred usdt:\n", traceback.format_exc())
+                    notifier(f"BSDT : Exception occurred usdt  {traceback.format_exc()}")
                     time.sleep(10)
         except Exception as e:
             notifier(e)
@@ -1408,7 +1411,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
             print(f'An error occurred on line USDT {line}: {e}')
             print("Exception occurred:\n", traceback.format_exc())
             notifier(f'An error occurred on line USDT {line}: {e}')
-            notifier("Exception occurred:\n", traceback.format_exc())
+            notifier(f"BSDT : Exception occurred usdt  {traceback.format_exc()}")
             time.sleep(10)
             restart = 1
 
