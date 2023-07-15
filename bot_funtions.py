@@ -794,7 +794,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                 try:
                     result = ws.recv()
                     data = json.loads(result)
-                    watchdog_usdt.value = 2
+                    watchdog_usdt.value = 1
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
@@ -1012,6 +1012,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                     symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='LONG')
 
                                 take_profit = entry+((entry-sl)*rr)
+                                time.sleep(1)
                                 notifier(
                                     f'USDT : TP : {round(take_profit,round_price)}')
                                 client.futures_create_order(
@@ -1045,6 +1046,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                     symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=quantity, dualSidePosition=True, positionSide='SHORT')
 
                                 take_profit = entry-((sl-entry)*rr)
+                                time.sleep(1)
                                 notifier(
                                     f'USDT : TP : {round(take_profit,round_price)}')
                                 if take_profit < 0:
@@ -1182,7 +1184,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                 try:
                     result = ws.recv()
                     data = json.loads(result)
-                    watchdog_busd.value = 2
+                    watchdog_busd.value = 1
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
