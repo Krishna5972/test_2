@@ -21,7 +21,6 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-from Watchdog import Watchdog
 
 
 def candle_size(x, coin):
@@ -727,9 +726,8 @@ def notifier_with_gif(file_path, caption, tries=25):
     print(f'Failed to send gif after {tries} attempts.')
 
 
-def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock):
+def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock,watchdog_usdt):
     notifier(f'Starting USDT function,SARAVANA BHAVA')
-    watchdog = Watchdog(timeout=59)
     sayings_and_gifs = [
         ("data/1.gif", "Bigger the patience, bigger the reward."),
         ("data/2.gif", "The market is a device for transferring money from the impatient to the patient."),
@@ -793,11 +791,10 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
             indicator = 0
             weight_reduce = 0
             while True:
-                watchdog.start()
                 try:
                     result = ws.recv()
                     data = json.loads(result)
-                    watchdog.reset()
+                    watchdog_usdt.value = 2
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
@@ -1117,7 +1114,6 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                     print(inner_error)
                     restart = 1
                     ws.close()
-                    watchdog.stop()
                     tb = traceback.extract_tb(sys.exc_info()[2])
                     filename, line, func, text = tb[-1]
                     print(f'An error occurred on line USDT {line}: {inner_error}')
@@ -1148,10 +1144,9 @@ def makeSense(sayings_and_gifs):
     notifier_with_gif(gif, saying)
 
 
-def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock):
+def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock,watchdog_busd):
     notifier(f'Starting BUSD function,SARAVANA BHAVA')
     restart = 0
-    watchdog = Watchdog(timeout=59)
 
     while (True):
         if restart == 1:
@@ -1184,11 +1179,10 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                     break
             notifier(f'BUSD : Round Quantity :{round_quantity} ')
             while True:
-                watchdog.start()
                 try:
                     result = ws.recv()
                     data = json.loads(result)
-                    watchdog.reset()
+                    watchdog_busd.value = 2
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
@@ -1392,7 +1386,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                     print(inner_error)
                     restart = 1
                     ws.close()
-                    watchdog.stop()
+                    
                     tb = traceback.extract_tb(sys.exc_info()[2])
                     filename, line, func, text = tb[-1]
                     print(f'An error occurred on line USDT {line}: {inner_error}')
@@ -1405,7 +1399,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
             notifier(f'BUSD : Restarting BUSD function : {coin}')
             print(e)
             ws.close()
-            watchdog.stop()
+         
             tb = traceback.extract_tb(sys.exc_info()[2])
             filename, line, func, text = tb[-1]
             print(f'An error occurred on line USDT {line}: {e}')

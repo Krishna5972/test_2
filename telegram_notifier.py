@@ -38,14 +38,14 @@ timeframes_dict={
 
 
 coin='ETH'
-timeframe_usdt='30m' 
+timeframe_usdt='5m' 
 period_usdt=12
 atr1_usdt=1
 pivot_period_usdt=10
 ma_condition_usdt='ema_100'
 time_usdt=timeframes_dict[timeframe_usdt]
 
-timeframe_busd='30m'  
+timeframe_busd='5m'  
 period_busd=12
 atr1_busd=1
 pivot_period_busd=10
@@ -67,6 +67,8 @@ while(True):
 
 in_trade_usdt=multiprocessing.Value('i',0)
 in_trade_busd=multiprocessing.Value('i',0)
+watchdog_usdt=multiprocessing.Value('i',2)
+watchdog_busd=multiprocessing.Value('i',2)
 lock=multiprocessing.Lock()
 
 pos=client.futures_position_information(symbol=f'{coin}USDT')
@@ -96,8 +98,7 @@ notifier_with_gif("data/engine.gif", "REVVING UP")
 
 notifier(f'SARAVANA BHAVA ! Running... ,USDT POS:{in_trade_usdt.value} , BUSD POS: {in_trade_busd.value}')
 
-
-p1=multiprocessing.Process(target=condition_usdt,args=[timeframe_usdt,
+usdt_args = [timeframe_usdt,
                                                      pivot_period_usdt,
                                                      atr1_usdt,
                                                      period_usdt,
@@ -108,9 +109,10 @@ p1=multiprocessing.Process(target=condition_usdt,args=[timeframe_usdt,
                                                      time_usdt,
                                                      in_trade_usdt,
                                                      in_trade_busd,
-                                                     lock])
+                                                     lock,watchdog_usdt]
 
-p2=multiprocessing.Process(target=condition_busdt,args=[timeframe_busd,
+
+busd_args = [timeframe_busd,
                                                         pivot_period_busd,
                                                         atr1_busd,
                                                         period_busd,
@@ -121,11 +123,54 @@ p2=multiprocessing.Process(target=condition_busdt,args=[timeframe_busd,
                                                         time_busd,
                                                         in_trade_usdt,
                                                         in_trade_busd,
-                                                        lock])    
+                                                        lock,watchdog_busd]
+
+
+
+
+
+p1=multiprocessing.Process(target=condition_usdt,args=usdt_args)
+
+p2=multiprocessing.Process(target=condition_busdt,args=busd_args)    
             
 
 if __name__=='__main__':
     p1.start()
     p2.start()
+
+    while True:
+        print(f'Checking USDT currently {watchdog_usdt.value}')
+        if watchdog_usdt.value < 0:
+            print('main : USDT Sleeping for 10 seconds and checking again if there is a change if not restarting')
+            time.sleep(10)
+
+            # If its watchdog_usdt == 0 again, end p1 and restart p1 again
+            if watchdog_usdt.value < 0:
+                notifier('main : Restarting USDT process')
+                p1.terminate()
+                p1.join(10)  # make sure p1 has finished
+                
+                p1 = multiprocessing.Process(target=condition_usdt,args =usdt_args)
+                p1.start()
+
+        print(f'Checking BUSD currently {watchdog_busd.value}')
+        if watchdog_busd.value < 0:
+            print('main : BUSD Sleeping for 10 seconds and checking again if there is a change if not restarting')
+            time.sleep(10)
+
+            # If its in_trade_usdt == 0 again, end p1 and restart p1 again
+            if watchdog_busd.value < 0:
+                notifier('main : Restarting BUSD process')
+                p2.terminate()
+                p2.join(10)  # make sure p1 has finished
+                
+                p2=multiprocessing.Process(target=condition_busdt,args=busd_args)
+                p2.start()
+
+                send_mail("daily_change.png",subject="BUSD restarted check for damage")
+        
+        watchdog_usdt.value -= 1
+        watchdog_busd.value -= 1
+        time.sleep(299)
 
             
