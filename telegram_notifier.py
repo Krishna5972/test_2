@@ -37,7 +37,12 @@ timeframes_dict={
 }
 
 
-coin='ETH'
+if len(sys.argv) > 1:
+    coin = sys.argv[1]  # Take coin from command line argument if provided
+else:
+    coin = 'ETH'
+
+
 timeframe_usdt='30m' 
 period_usdt=12
 atr1_usdt=1
