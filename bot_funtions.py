@@ -21,7 +21,10 @@ import random
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-
+import requests
+import time
+import hmac
+import hashlib
 
 def candle_size(x, coin):
     return abs(((x['close']-x['open'])/x['open'])*100)
@@ -727,7 +730,7 @@ def notifier_with_gif(file_path, caption, tries=25):
 
 
 def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock,watchdog_usdt):
-    notifier(f'Starting USDT function,SARAVANA BHAVA')
+    notifier(f'Starting USDT function,SARAVANA BHAVA ')
     sayings_and_gifs = [
         ("data/1.gif", "Bigger the patience, bigger the reward."),
         ("data/2.gif", "The market is a device for transferring money from the impatient to the patient."),
@@ -765,13 +768,13 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
     previous_trade_win_divide = 3
     while (True):
         if restart == 1:
-            notifier('USDT Restarted succesfully')
+            notifier(f'USDT Restarted succesfully : {coin} : {timeframe}')
             restart = 0
         try:
             ws = websocket.WebSocket()
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
-            notifier(f'Started USDT function : {timeframe}')
+            notifier(f'Started USDT function : {coin} {timeframe}')
             ws.settimeout(15)
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
@@ -1147,19 +1150,19 @@ def makeSense(sayings_and_gifs):
 
 
 def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchange, client, coin, sleep_time, in_trade_usdt, in_trade_busd, lock,watchdog_busd):
-    notifier(f'Starting BUSD function,SARAVANA BHAVA')
+    notifier(f'Starting BUSD function for {coin},SARAVANA BHAVA')
     restart = 0
 
     while (True):
         if restart == 1:
-            notifier('BUSD Restarted succesfully')
+            notifier(f'BUSD Restarted succesfully : {coin}')
             restart = 0
         try:
             ws = websocket.WebSocket()
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             ws.settimeout(15)
-            notifier(f'Started BUSD function : {timeframe}')
+            notifier(f'Started BUSD function  {coin} : {timeframe}')
             risk = 0.01
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
@@ -1176,9 +1179,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                 if symbol['symbol'] == f"{coin}BUSD":
                     round_quantity = symbol['quantityPrecision']
                     break
-                elif symbol['symbol'] == f"{coin}USDT":
-                    round_quantity = symbol['quantityPrecision']
-                    break
+    
             notifier(f'BUSD : Round Quantity :{round_quantity} ')
             while True:
                 try:
@@ -1596,3 +1597,54 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
     text = message.as_string()
     s_e.sendmail(from_, to, text)
     print(f'Sent {filename}')
+
+
+def get_max_leverage(coin: str, api_key: str, secret_key: str):
+    base_url = "https://fapi.binance.com"
+
+    # Get the server time
+    response = requests.get(base_url + "/fapi/v1/time")
+    response.raise_for_status()
+
+    server_time = response.json()["serverTime"]
+
+    # Prepare the request
+    endpoint = "/fapi/v1/leverageBracket"
+    params = {
+        "timestamp": server_time
+    }
+
+    # Sort parameters by key
+    sorted_params = sorted(params.items())
+
+    # Create a query string
+    query_string = "&".join([f"{d[0]}={d[1]}" for d in sorted_params])
+
+    # Create the signature
+    signature = hmac.new(secret_key.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+
+    # Add the signature to the parameters
+    params['signature'] = signature
+
+    # Send the GET request
+    headers = {
+        'X-MBX-APIKEY': api_key
+    }
+    response = requests.get(base_url + endpoint, params=params, headers=headers)
+
+    # Handle the response
+    response.raise_for_status()
+    data = response.json()
+
+    usdt_leverage = 0
+    busd_leverage = 0
+
+    for dict_ in data:
+        if dict_['symbol'] == f'{coin}BUSD':
+            busd_leverage = dict_['brackets'][0]['initialLeverage']
+        
+    for dict_ in data:
+        if dict_['symbol'] == f'{coin}USDT':
+            usdt_leverage = dict_['brackets'][0]['initialLeverage']
+    
+    return usdt_leverage,busd_leverage

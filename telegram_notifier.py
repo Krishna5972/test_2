@@ -57,12 +57,20 @@ pivot_period_busd=10
 ma_condition_busd='ema_100'
 time_busd=timeframes_dict[timeframe_busd]
 
+usdt_leverage,busd_leverage = 18,18
+
+max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
+
+usdt_leverage = min(usdt_leverage, max_usdt_leverage)
+busd_leverage = min(busd_leverage, max_busd_leverage)
+
+
 while(True):
     try:
         client=Client(config.api_key,config.secret_key)
 
-        client.futures_change_leverage(symbol=f'{coin}USDT', leverage=18)
-        client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=18)
+        client.futures_change_leverage(symbol=f'{coin}USDT', leverage=usdt_leverage)
+        client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=busd_leverage)
         notifier(f'SARAVANA BHAVA')
         break
     except Exception as e:
