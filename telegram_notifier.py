@@ -151,6 +151,8 @@ if __name__=='__main__':
     p1.start()
     p2.start()
 
+    durations = [299, 180, 60] 
+
     while True:
         print(f'Checking USDT currently {watchdog_usdt.value}')
         if watchdog_usdt.value < 0:
@@ -184,6 +186,13 @@ if __name__=='__main__':
         
         watchdog_usdt.value -= 1
         watchdog_busd.value -= 1
-        time.sleep(299)
+
+        index = random.choices(range(len(durations)), weights=[0.2, 0.3, 0.5])[0]
+
+        # Get the chosen sleep duration
+        sleep_duration = durations[index]
+
+
+        time.sleep(sleep_duration)
 
             
