@@ -773,7 +773,8 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started USDT function : {coin} {timeframe}')
-            ws.settimeout(15)
+            notifier(f'USDT : New connection to steam established : {timeframe}')
+            ws.settimeout(60)
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
             df = pd.DataFrame(
@@ -796,6 +797,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                     result = ws.recv()
                     data = json.loads(result)
                     watchdog_usdt.value = 1
+                    print(f'From USDT : {data} \n {watchdog_usdt.value}')
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
@@ -1159,8 +1161,10 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
             ws = websocket.WebSocket()
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
-            ws.settimeout(15)
             notifier(f'Started BUSD function  {coin} : {timeframe}')
+            notifier(f'BUSD : New connection to steam established {timeframe}')
+            ws.settimeout(60)
+            
             risk = 0.01
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
@@ -1184,6 +1188,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                     result = ws.recv()
                     data = json.loads(result)
                     watchdog_busd.value = 1
+                    print(f'From BUSD : {data} \n {watchdog_busd.value}')
                     if data['k']['x'] == True:
                         candle = data['k']
                         candle_data = [candle['t'], candle['o'],
