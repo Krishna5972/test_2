@@ -773,7 +773,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started USDT function : {coin} {timeframe}')
-            notifier(f'USDT : New connection to stream established : {timeframe}')
+            notifier(f'USDT : New connection to steam established : {timeframe}')
             ws.settimeout(60)
             bars = exchange.fetch_ohlcv(
                 f'{coin}/USDT', timeframe=timeframe, limit=1998)
@@ -826,37 +826,26 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                     # close open position if any
                                     close_position(client, coin, 'Sell')
                                     in_trade_usdt.value = 0
-                                    notifier(f'USDT : Sell Position Closed {timeframe}')
+                                    notifier(f'USDT : Position Closed {timeframe}')
                                 except Exception as err:
                                     try:
                                         close_position(client, coin, 'Buy')
-                                        notifier(f'USDT : Buy Position Closed {timeframe}')
+                                        notifier(
+                                            f'USDT : Position Closed {timeframe}')
                                         in_trade_usdt.value = 0
                                     except Exception as e:
-                                        notifier(f'USDT : No  Open Sell Position to Close {timeframe}')
-
-                                try:
-                                    # close open position if any
-                                    close_position(client, coin, 'Buy')
-                                    notifier(f'USDT : Buy Position Closed {timeframe}')
-                                    in_trade_usdt.value = 0
-                                except Exception as err:
-                                    try:
-                                        close_position(client, coin, 'Sell')
-                                        in_trade_usdt.value = 0
-                                        notifier(f'USDT :Sell Position Closed {timeframe}')
-                                        
-                                    except Exception as e:
-                                        notifier(f'USDT : No Open Buy Position to Close {timeframe}')
-
-
+                                        notifier(
+                                            f'USDT : No Open Position to Close {timeframe}')
                                 week_over_week(client, coin, acc_balance)
-                                notifier(" USDT: Weekly Report is generated and sent via mail")
+                                notifier(
+                                    " USDT: Weekly Report is generated and sent via mail")
 
                                 if weekday == 5:
-                                    notifier(" USDT:Not taking the trade as it is Saturday")
+                                    notifier(
+                                        " USDT:Not taking the trade as it is Saturday")
                                 else:
-                                    notifier("USDT:Not taking the trade as it is Sunday")
+                                    notifier(
+                                        "USDT:Not taking the trade as it is Sunday")
                                 continue
 
                             trade_df = create_signal_df(
@@ -977,28 +966,17 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                                 # close open position if any
                                 close_position(client, coin, 'Sell')
                                 in_trade_usdt.value = 0
-                                notifier(f'USDT : Sell Position Closed {timeframe}')
-                            except Exception as err:
-                                    try:
-                                        close_position(client, coin, 'Buy')
-                                        notifier(f'USDT : Buy Position Closed {timeframe}')
-                                        in_trade_usdt.value = 0
-                                    except Exception as e:
-                                        notifier(f'USDT : No  Open Sell Position to Close {timeframe}')
-
-                            try:
-                                # close open position if any
-                                close_position(client, coin, 'Buy')
-                                notifier(f'USDT : Buy Position Closed {timeframe}')
-                                in_trade_usdt.value = 0
+                                notifier(f'USDT : Position Closed {timeframe}')
                             except Exception as err:
                                 try:
-                                    close_position(client, coin, 'Sell')
+                                    close_position(client, coin, 'Buy')
+                                    notifier(f'USDT : Position Closed {timeframe}')
                                     in_trade_usdt.value = 0
-                                    notifier(f'USDT :Sell Position Closed {timeframe}')
-                                    
                                 except Exception as e:
-                                    notifier(f'USDT : No Open Buy Position to Close {timeframe}')
+                                    notifier(
+                                        f'USDT : No Open Position to Close {timeframe}')
+
+                                print(err)
 
                             # print(f'scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]},bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value},sleeping for {sleep_time*60} seconds')
 
@@ -1184,7 +1162,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
             ws.connect(
                 f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}")
             notifier(f'Started BUSD function  {coin} : {timeframe}')
-            notifier(f'BUSD : New connection to stream established {timeframe}')
+            notifier(f'BUSD : New connection to steam established {timeframe}')
             ws.settimeout(60)
             
             risk = 0.01
