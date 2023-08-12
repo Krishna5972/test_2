@@ -82,10 +82,6 @@ while(True):
         notifier(f'SARAVANA BHAVA')
         break
     except Exception as e:
-
-
-        
-        
         notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
         time.sleep(300)
 
