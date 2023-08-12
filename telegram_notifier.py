@@ -64,6 +64,9 @@ max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, con
 usdt_leverage = min(usdt_leverage, max_usdt_leverage)
 busd_leverage = min(busd_leverage, max_busd_leverage)
 
+is_usdt_exist=1
+is_busd_exist=1
+
 
 while(True):
     try:
@@ -71,13 +74,22 @@ while(True):
         try:
             client.futures_change_leverage(symbol=f'{coin}USDT', leverage=usdt_leverage)
         except Exception as e:
-            client.futures_change_leverage(symbol=f'{coin}USDT', leverage=max_usdt_leverage)
-            notifier(f"Had to make a leverage change from {usdt_leverage} to {max_usdt_leverage}")
+            try:
+                client.futures_change_leverage(symbol=f'{coin}USDT', leverage=max_usdt_leverage)
+                notifier(f"Had to make a leverage change from {usdt_leverage} to {max_usdt_leverage}")
+            except Exception as e:
+                notifier(f'{coin}USDT Symbol does not Exist')
+                is_usdt_exist=0
         try:
             client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=busd_leverage)
         except Exception as e:
-            client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=max_busd_leverage)
-            notifier(f"Had to make a leverage change from {busd_leverage} to {max_busd_leverage}")
+            try:
+                client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=max_busd_leverage)
+            
+                notifier(f"Had to make a leverage change from {busd_leverage} to {max_busd_leverage}")
+            except Exception as e:
+                notifier(f'{coin}BUSD Symbol does not Exist')
+                is_busd_exist=0
             
         notifier(f'SARAVANA BHAVA')
         break
@@ -156,39 +168,46 @@ p2=multiprocessing.Process(target=condition_busdt,args=busd_args)
             
 
 if __name__=='__main__':
-    p1.start()
-    p2.start()
+    if is_usdt_exist==1:
+        p1.start()
+    
+    if is_busd_exist == 1:
+        p2.start()
+    
+    
 
     durations = [299, 180, 60] 
 
     while True:
-        print(f'Checking USDT currently {watchdog_usdt.value}')
-        if watchdog_usdt.value < 0:
-            print('main : USDT Sleeping for 10 seconds and checking again if there is a change if not restarting')
-            time.sleep(10)
-
-            # If its watchdog_usdt == 0 again, end p1 and restart p1 again
+        if is_usdt_exist==1:
+            
+            print(f'Checking USDT currently {watchdog_usdt.value}')
             if watchdog_usdt.value < 0:
-                notifier('main : Restarting USDT process')
-                p1.terminate()
-                p1.join(10)  # make sure p1 has finished
-                
-                p1 = multiprocessing.Process(target=condition_usdt,args =usdt_args)
-                p1.start()
+                print('main : USDT Sleeping for 10 seconds and checking again if there is a change if not restarting')
+                time.sleep(10)
 
-        print(f'Checking BUSD currently {watchdog_busd.value}')
-        if watchdog_busd.value < 0:
-            print('main : BUSD Sleeping for 10 seconds and checking again if there is a change if not restarting')
-            time.sleep(10)
-
-            # If its in_trade_usdt == 0 again, end p1 and restart p1 again
+                # If its watchdog_usdt == 0 again, end p1 and restart p1 again
+                if watchdog_usdt.value < 0:
+                    notifier('main : Restarting USDT process')
+                    p1.terminate()
+                    p1.join(10)  # make sure p1 has finished
+                    
+                    p1 = multiprocessing.Process(target=condition_usdt,args =usdt_args)
+                    p1.start()
+        if is_busd_exist == 1:
+            print(f'Checking BUSD currently {watchdog_busd.value}')
             if watchdog_busd.value < 0:
-                notifier('main : Restarting BUSD process')
-                p2.terminate()
-                p2.join(10)  # make sure p1 has finished
-                
-                p2=multiprocessing.Process(target=condition_busdt,args=busd_args)
-                p2.start()
+                print('main : BUSD Sleeping for 10 seconds and checking again if there is a change if not restarting')
+                time.sleep(10)
+
+                # If its in_trade_usdt == 0 again, end p1 and restart p1 again
+                if watchdog_busd.value < 0:
+                    notifier('main : Restarting BUSD process')
+                    p2.terminate()
+                    p2.join(10)  # make sure p1 has finished
+                    
+                    p2=multiprocessing.Process(target=condition_busdt,args=busd_args)
+                    p2.start()
 
                 send_mail("daily_change.png",subject="BUSD restarted check for damage")
         
