@@ -68,12 +68,24 @@ busd_leverage = min(busd_leverage, max_busd_leverage)
 while(True):
     try:
         client=Client(config.api_key,config.secret_key)
-
-        client.futures_change_leverage(symbol=f'{coin}USDT', leverage=usdt_leverage)
-        client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=busd_leverage)
+        try:
+            client.futures_change_leverage(symbol=f'{coin}USDT', leverage=usdt_leverage)
+        except Exception as e:
+            client.futures_change_leverage(symbol=f'{coin}USDT', leverage=max_usdt_leverage)
+            notifier(f"Had to make a leverage change from {usdt_leverage} to {max_usdt_leverage}")
+        try:
+            client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=busd_leverage)
+        except Exception as e:
+            client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=max_busd_leverage)
+            notifier(f"Had to make a leverage change from {busd_leverage} to {max_busd_leverage}")
+            
         notifier(f'SARAVANA BHAVA')
         break
     except Exception as e:
+
+
+        
+        
         notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
         time.sleep(300)
 
