@@ -151,7 +151,7 @@ if __name__=='__main__':
     p1.start()
     p2.start()
 
-    durations = [299, 180, 60] 
+    durations = [60, 30, 10] 
 
     while True:
         print(f'Checking USDT currently {watchdog_usdt.value}')
