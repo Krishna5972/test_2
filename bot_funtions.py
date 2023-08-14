@@ -1077,7 +1077,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
                         else:
                             # print(f'Scanning USDT {super_df.iloc[-1][f"OpenTime"]} trade not found, ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]} and uptrend :{super_df.iloc[-1]["in_uptrend"]}, bsud_poisiton :{in_trade_busd.value},usdt_position :{in_trade_usdt.value}')
                             # print(f'ma : {super_df.iloc[-1][ma_condition]},close :{super_df.iloc[-1]["close"]},ma_pos :{super_df.iloc[-1][f"{ma_condition}_pos"]}')
-                            notifier(f'USDT : {timeframe} candle closed : {coin}')
+                            notifier(f'USDT : {timeframe} candle closed : {coin} ,Current Uptrend: {super_df.iloc[-1]["in_uptrend"]}')
 
                             if in_trade_usdt.value == 1 and weight_reduce >= 1:
                                 weight_reduce = 0
@@ -1357,7 +1357,7 @@ def condition_busdt(timeframe, pivot_period, atr1, period, ma_condition, exchang
                             else:
                                 notifier(f'BUSD : Not taking the trade')
                         else:
-                            notifier(f'BUSD : {timeframe} candle closed : {coin}')
+                            notifier(f'BUSD : {timeframe} candle closed : {coin} ,Current Uptrend: {super_df.iloc[-1]["in_uptrend"]}')
 
                         try:
                             now = datetime.utcnow()

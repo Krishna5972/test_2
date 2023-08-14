@@ -179,7 +179,7 @@ if __name__=='__main__':
     
     
 
-    durations = [299, 180, 60] 
+    durations = [60, 30, 10] 
 
     while True:
         if is_usdt_exist==1:
