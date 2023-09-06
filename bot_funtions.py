@@ -757,6 +757,7 @@ def condition_usdt(timeframe, pivot_period, atr1, period, ma_condition, exchange
         ("data/12.gif","Simplicity triumphs: Keep your trading strategy straightforward and resist unnecessary tinkering"),
         ("data/9.gif","Consistency breeds success: Stick to your plan and avoid being swayed by market noise"),
         ("data/10.gif","Choose the pain of discipline in market trading or the pain of blowing up your trading account.")
+        ("data/11.gif","You might not enjoy the discipline but you will definitely enjoy the results")
     ]
     restart = 0
     risk = 0.028
