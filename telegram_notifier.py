@@ -43,14 +43,14 @@ else:
     coin = 'ETH'
 
 
-timeframe_usdt='30m' 
-period_usdt=12
+timeframe_usdt='1h' 
+period_usdt=4
 atr1_usdt=1
-pivot_period_usdt=10
-ma_condition_usdt='ema_100'
+pivot_period_usdt=1
+ma_condition_usdt='ema_5'
 time_usdt=timeframes_dict[timeframe_usdt]
 
-timeframe_busd='30m'  
+timeframe_busd='1h'  
 period_busd=12
 atr1_busd=1
 pivot_period_busd=10
